@@ -1,0 +1,16 @@
+langgraph
+langchain-core
+pydantic
+pydantic-settings
+httpx
+feedparser
+beautifulsoup4
+lxml
+python-dotenv
+pandas
+openpyxl
+sqlalchemy
+psycopg[binary]
+tenacity
+rapidfuzz
+playwright

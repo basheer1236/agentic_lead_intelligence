@@ -1,0 +1,59 @@
+name: Daily Incremental Lead Intelligence Pipeline
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: lead_user
+          POSTGRES_PASSWORD: lead_password
+          POSTGRES_DB: lead_intelligence
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Lead Intelligence Pipeline
+        env:
+          DATABASE_URL: postgresql://lead_user:lead_password@localhost:5432/lead_intelligence
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          APP_ENV: production
+        run: |
+          python scripts/run_pipeline.py
+
+      - name: Upload Excel Output Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: lead-intelligence-master-excel
+          path: data/exports/lead_intelligence_master.xlsx
