@@ -16,16 +16,18 @@ IF %ERRORLEVEL% NEQ 0 (
 
 echo [+] Python installation verified.
 
-:: 2. Create Virtual Environment
-IF NOT EXIST "venv" (
+:: 2. Create / Activate Virtual Environment
+IF EXIST ".venv\Scripts\activate.bat" (
+    echo [+] Existing virtual environment (.venv) detected.
+    call .venv\Scripts\activate.bat
+) ELSE IF EXIST "venv\Scripts\activate.bat" (
+    echo [+] Existing virtual environment (venv) detected.
+    call venv\Scripts\activate.bat
+) ELSE (
     echo [+] Creating Python virtual environment (venv)...
     python -m venv venv
-) ELSE (
-    echo [+] Virtual environment (venv) already exists.
+    call venv\Scripts\activate.bat
 )
-
-:: 3. Activate Virtual Environment
-call venv\Scripts\activate.bat
 
 :: 4. Upgrade Pip and Install Dependencies
 echo [+] Upgrading pip and installing dependencies from requirements.txt...
