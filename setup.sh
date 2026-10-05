@@ -14,16 +14,18 @@ fi
 
 echo "[+] Python3 installation verified."
 
-# 2. Create Virtual Environment
-if [ ! -d "venv" ]; then
-    echo "[+] Creating Python virtual environment (venv)..."
-    python3 -m venv venv
+# 2. Create / Activate Virtual Environment
+if [ -d ".venv" ]; then
+    echo "[+] Existing virtual environment (.venv) detected."
+    source .venv/bin/activate
+elif [ -d "venv" ]; then
+    echo "[+] Existing virtual environment (venv) detected."
+    source venv/bin/activate
 else
-    echo "[+] Virtual environment (venv) already exists."
+    echo "[+] Creating Python virtual environment (.venv)..."
+    python3 -m venv .venv
+    source .venv/bin/activate
 fi
-
-# 3. Activate Virtual Environment
-source venv/bin/activate
 
 # 4. Upgrade Pip and Install Dependencies
 echo "[+] Upgrading pip and installing dependencies..."

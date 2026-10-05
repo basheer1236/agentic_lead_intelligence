@@ -5,12 +5,14 @@ echo "============================================================"
 echo "RUNNING AGENTIC LEAD INTELLIGENCE PIPELINE (UNIX)"
 echo "============================================================"
 
-if [ ! -d "venv" ]; then
-    echo "[ERROR] Virtual environment not found. Please run './setup.sh' first."
+if [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
+elif [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+else
+    echo "[ERROR] Virtual environment not found (.venv or venv). Please run './setup.sh' first."
     exit 1
 fi
-
-source venv/bin/activate
 
 python scripts/run_pipeline.py
 
