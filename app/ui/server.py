@@ -36,6 +36,24 @@ class SettingsUpdateRequest(BaseModel):
     llm_api_key: Optional[str] = None
 
 
+
+@app.on_event("startup")
+async def on_startup():
+    try:
+        from app.storage.database import engine
+        from app.storage.base import Base
+        import app.storage.models
+        Base.metadata.create_all(bind=engine)
+    except Exception as exc:
+        print(f"[WARN] Database initialization notice: {exc}")
+
+
+@app.get("/health")
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok", "app": "Agentic Lead Intelligence Console"}
+
+
 @app.get("/", response_class=HTMLResponse)
 async def get_index():
     if not TEMPLATE_PATH.exists():
@@ -214,11 +232,13 @@ async def update_settings(req: SettingsUpdateRequest):
 
 def main():
     import uvicorn
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "8000"))
     print("\n" + "=" * 65)
     print("  AGENTIC LEAD INTELLIGENCE - EXECUTIVE DASHBOARD")
-    print("  Server starting at: http://localhost:8000")
+    print(f"  Server starting at: http://{host}:{port}")
     print("=" * 65 + "\n")
-    uvicorn.run("app.ui.server:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("app.ui.server:app", host=host, port=port, reload=False)
 
 
 if __name__ == "__main__":
