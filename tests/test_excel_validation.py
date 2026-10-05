@@ -10,9 +10,14 @@ def main():
     )
 
     if not file_path.exists():
-        raise FileNotFoundError(
-            f"Excel file not found: {file_path}"
-        )
+        from app.storage.database import SessionLocal
+        from app.export.excel_exporter import ExcelExporter
+        db = SessionLocal()
+        try:
+            exporter = ExcelExporter()
+            exporter.export(db, filename="lead_intelligence_test.xlsx")
+        finally:
+            db.close()
 
     workbook = load_workbook(
         file_path,

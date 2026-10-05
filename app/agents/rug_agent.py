@@ -17,7 +17,7 @@ ARTICLE TITLE:
 {title}
 
 ARTICLE:
-{text[:10000]}
+{text[:5500]}
 
 STRICT EXTRACTION RULES:
 

@@ -17,7 +17,7 @@ ARTICLE TITLE:
 {title}
 
 ARTICLE:
-{text[:8000]}
+{text[:5000]}
 
 Extract ONLY information explicitly supported by the article.
 

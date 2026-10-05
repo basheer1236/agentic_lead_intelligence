@@ -24,6 +24,8 @@ htmlcov/
 .DS_Store
 
 # Data & Exports
+*.db
+*.sqlite
 data/raw/
 data/processed/
 data/exports/

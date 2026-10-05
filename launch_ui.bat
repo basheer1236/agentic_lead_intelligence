@@ -2,7 +2,7 @@
 SETLOCAL EnableDelayedExpansion
 
 echo ============================================================
-echo RUNNING AGENTIC LEAD INTELLIGENCE PIPELINE
+echo   AGENTIC LEAD INTELLIGENCE - EXECUTIVE DASHBOARD
 echo ============================================================
 
 IF EXIST ".venv\Scripts\activate.bat" (
@@ -10,20 +10,20 @@ IF EXIST ".venv\Scripts\activate.bat" (
 ) ELSE IF EXIST "venv\Scripts\activate.bat" (
     call venv\Scripts\activate.bat
 ) ELSE (
-    echo [ERROR] Virtual environment not found (.venv or venv).
+    echo [ERROR] Python virtual environment not found (.venv or venv).
     pause
     exit /b 1
 )
 
 set PYTHONPATH=.
-python scripts\run_pipeline.py
 
 echo.
-echo ============================================================
-echo PIPELINE COMPLETE! Opening Excel exports directory...
-echo ============================================================
-IF EXIST "data\exports" (
-    start data\exports
-)
+echo [+] Launching dashboard server on http://localhost:8000...
+echo [+] Opening your browser...
+echo.
+
+start "" "http://localhost:8000"
+
+python -m app.ui.server
 
 pause

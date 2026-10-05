@@ -1,3 +1,4 @@
+import logging
 from openai import OpenAI, APIError, APITimeoutError, RateLimitError as OpenAIRateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
@@ -9,49 +10,145 @@ from app.errors import (
     TemporaryServerError,
 )
 
+logger = logging.getLogger(__name__)
+
+try:
+    import anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    anthropic = None
+    ANTHROPIC_AVAILABLE = False
+
 
 class LLMClient:
+    """
+    Universal LLM Client supporting any provider, API key, and model.
+    Seamlessly routes between OpenAI-compatible endpoints (OpenAI, OpenRouter,
+    Gemini, Groq, DeepSeek, Mistral, Ollama, Together, Perplexity, custom endpoints)
+    and native providers (Anthropic).
+    """
 
     def __init__(self):
-        if not settings.llm_api_key or not settings.llm_base_url or not settings.llm_model:
+        from app.config.settings import PROVIDER_BASE_URLS
+        self.provider = (settings.llm_provider or "openai").lower().strip()
+        self.api_key = settings.llm_api_key.strip() if settings.llm_api_key else ""
+        raw_base_url = settings.llm_base_url.strip() if settings.llm_base_url else ""
+        self.base_url = raw_base_url or PROVIDER_BASE_URLS.get(self.provider, "https://api.openai.com/v1")
+        self.model = settings.llm_model.strip() if settings.llm_model else ""
+
+        if not self.api_key:
             raise InvalidConfigurationError(
-                "Missing required LLM configuration (llm_api_key, llm_base_url, llm_model)."
+                "Missing required LLM API key. Please specify LLM_API_KEY in your .env file."
             )
 
-        self.client = OpenAI(
-            api_key=settings.llm_api_key,
-            base_url=settings.llm_base_url,
-        )
+        if not self.model:
+            raise InvalidConfigurationError(
+                f"Missing LLM model name for provider '{self.provider}'. Please specify LLM_MODEL in .env."
+            )
+
+        # Determine client engine: Native Anthropic vs OpenAI-compatible
+        self.is_native_anthropic = False
+        if self.provider == "anthropic" and "anthropic.com" in self.base_url:
+            if not ANTHROPIC_AVAILABLE:
+                raise InvalidConfigurationError(
+                    "The 'anthropic' package is required for native Anthropic provider. "
+                    "Run 'pip install anthropic' or use OpenRouter instead."
+                )
+            self.anthropic_client = anthropic.Anthropic(
+                api_key=self.api_key,
+                timeout=settings.request_timeout_seconds,
+            )
+            self.is_native_anthropic = True
+            logger.info("LLMClient initialized using native Anthropic client for model: %s", self.model)
+        else:
+            # Universal OpenAI-compatible client
+            default_headers = {}
+            if self.provider == "openrouter":
+                default_headers = {
+                    "HTTP-Referer": "https://github.com/basheer7526/agentic-lead-intelligence",
+                    "X-Title": "Agentic Lead Intelligence",
+                }
+
+            self.client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url or None,
+                default_headers=default_headers if default_headers else None,
+                timeout=max(settings.request_timeout_seconds, 60),
+            )
+            logger.info(
+                "LLMClient initialized for provider '%s' (base_url: %s, model: %s)",
+                self.provider,
+                self.base_url,
+                self.model,
+            )
 
     @retry(
-        stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=2, min=3, max=30),
+        stop=stop_after_attempt(8),
+        wait=wait_exponential(multiplier=2, min=5, max=60),
         retry=retry_if_exception_type((HTTPTimeoutError, RateLimitError, TemporaryServerError)),
         reraise=True,
     )
     def generate(self, system_prompt: str, user_prompt: str) -> str:
+        """
+        Generate completions across any provider and model.
+        """
+        if self.is_native_anthropic:
+            return self._generate_anthropic(system_prompt, user_prompt)
+        return self._generate_openai_compatible(system_prompt, user_prompt)
+
+    def _generate_openai_compatible(self, system_prompt: str, user_prompt: str) -> str:
         try:
             response = self.client.chat.completions.create(
-                model=settings.llm_model,
+                model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
             )
-            return response.choices[0].message.content or ""
+            msg = response.choices[0].message
+            content = getattr(msg, "content", None) or ""
+            if not content.strip() and hasattr(msg, "reasoning") and getattr(msg, "reasoning", None):
+                content = getattr(msg, "reasoning")
+            return content
 
         except APITimeoutError as exc:
-            raise HTTPTimeoutError("LLM API request timed out.") from exc
+            raise HTTPTimeoutError(f"LLM API request timed out for provider '{self.provider}'.") from exc
 
         except OpenAIRateLimitError as exc:
-            raise RateLimitError("LLM API rate limit exceeded.") from exc
+            raise RateLimitError(f"LLM API rate limit exceeded for provider '{self.provider}'.") from exc
 
         except APIError as exc:
-            if "rate limit" in str(exc).lower() or "429" in str(exc):
-                raise RateLimitError("LLM API rate limit exceeded.") from exc
+            err_msg = str(exc).lower()
+            if "rate limit" in err_msg or "429" in err_msg:
+                raise RateLimitError(f"LLM API rate limit exceeded: {exc}") from exc
             raise TemporaryServerError(f"LLM API server error: {exc}") from exc
 
         except Exception as exc:
-            if "rate limit" in str(exc).lower() or "429" in str(exc):
-                raise RateLimitError("LLM API rate limit exceeded.") from exc
+            err_msg = str(exc).lower()
+            if "rate limit" in err_msg or "429" in err_msg:
+                raise RateLimitError(f"LLM API rate limit exceeded: {exc}") from exc
+            raise
+
+    def _generate_anthropic(self, system_prompt: str, user_prompt: str) -> str:
+        try:
+            response = self.anthropic_client.messages.create(
+                model=self.model,
+                max_tokens=4096,
+                system=system_prompt,
+                messages=[{"role": "user", "content": user_prompt}],
+            )
+            parts = []
+            for block in response.content:
+                if hasattr(block, "text"):
+                    parts.append(block.text)
+            return "".join(parts)
+
+        except Exception as exc:
+            if ANTHROPIC_AVAILABLE:
+                if isinstance(exc, anthropic.RateLimitError):
+                    raise RateLimitError("Anthropic API rate limit exceeded.") from exc
+                if isinstance(exc, anthropic.APITimeoutError):
+                    raise HTTPTimeoutError("Anthropic API request timed out.") from exc
+                if isinstance(exc, anthropic.APIError):
+                    raise TemporaryServerError(f"Anthropic API server error: {exc}") from exc
             raise

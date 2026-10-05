@@ -29,7 +29,7 @@ Description:
 {description}
 
 Article text:
-{text[:12000]}
+{text[:3500]}
 
 Return ONLY valid JSON:
 

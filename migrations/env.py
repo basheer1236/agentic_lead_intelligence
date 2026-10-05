@@ -32,7 +32,8 @@ target_metadata = Base.metadata
 def run_migrations_offline() -> None:
     """Run migrations in offline mode."""
 
-    url = settings.database_url
+    from app.storage.database import get_effective_database_url
+    url = get_effective_database_url(settings.database_url)
 
     context.configure(
         url=url,
@@ -54,9 +55,8 @@ def run_migrations_online() -> None:
         {}
     )
 
-    # Use DATABASE_URL from .env instead of storing
-    # the database password inside alembic.ini
-    configuration["sqlalchemy.url"] = settings.database_url
+    from app.storage.database import get_effective_database_url
+    configuration["sqlalchemy.url"] = get_effective_database_url(settings.database_url)
 
     # Create SQLAlchemy engine
     connectable = engine_from_config(

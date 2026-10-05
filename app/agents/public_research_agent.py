@@ -110,49 +110,11 @@ def _extract_json(raw_response: str) -> dict:
 
     text = text.strip()
 
-    # ---------------------------------------------------------
-    # Attempt 1: direct JSON parsing
-    # ---------------------------------------------------------
-
-    try:
-        return json.loads(text, strict=False)
-    except json.JSONDecodeError:
-        pass
-
-    start = text.find("{")
-    end = text.rfind("}")
-
-    if start == -1:
-        raise ValueError(
-            "LLM response did not contain a JSON object.\n\n"
-            "RAW LLM RESPONSE:\n"
-            f"{text}"
-        )
-
-    if end == -1 or end <= start:
-        json_text = text[start:] + "}"
-    else:
-        json_text = text[start:end + 1]
-
-    try:
-        return json.loads(json_text, strict=False)
-    except json.JSONDecodeError:
-        json_text = re.sub(r",\s*([}\]])", r"\1", json_text)
-        try:
-            return json.loads(json_text, strict=False)
-        except json.JSONDecodeError:
-            if json_text.count("[") > json_text.count("]"):
-                json_text += "]"
-            if json_text.count("{") > json_text.count("}"):
-                json_text += "}"
-            try:
-                return json.loads(json_text, strict=False)
-            except json.JSONDecodeError as exc:
-                raise ValueError(
-                    "LLM returned malformed JSON.\n\n"
-                    "RAW LLM RESPONSE:\n"
-                    f"{text}"
-                ) from exc
+    from app.utils.json_cleaner import clean_and_parse_json
+    parsed = clean_and_parse_json(text)
+    if not parsed:
+        return {"designer_name": designer_name, "studio_name": studio_name, "sources": []}
+    return parsed
 
 
 class PublicResearchAgent:

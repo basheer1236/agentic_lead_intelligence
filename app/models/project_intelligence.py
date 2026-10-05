@@ -27,8 +27,8 @@ class ProjectIntelligence(BaseModel):
     project_size: Optional[str] = None
     completion_year: str | int | None = None
 
-    homeowner: HomeownerInfo
-    designer: DesignerInfo
+    homeowner: HomeownerInfo = HomeownerInfo()
+    designer: DesignerInfo = DesignerInfo()
 
     flooring: List[str] = []
     furniture: List[str] = []

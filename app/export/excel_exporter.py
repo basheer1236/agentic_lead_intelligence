@@ -171,14 +171,14 @@ class ExcelExporter:
         if exclude_test_data:
             where_clause = """
                 WHERE (p.project_name IS NULL OR (
-                    p.project_name NOT ILIKE '%test%' 
-                    AND p.project_name NOT ILIKE '%e2e%' 
-                    AND p.project_name NOT ILIKE '%idempotency%'
+                    LOWER(p.project_name) NOT LIKE '%test%' 
+                    AND LOWER(p.project_name) NOT LIKE '%e2e%' 
+                    AND LOWER(p.project_name) NOT LIKE '%idempotency%'
                 ))
                 AND (p.designer_name IS NULL OR (
-                    p.designer_name NOT ILIKE '%test%'
-                    AND p.designer_name NOT ILIKE '%e2e%'
-                    AND p.designer_name NOT ILIKE '%idempotency%'
+                    LOWER(p.designer_name) NOT LIKE '%test%'
+                    AND LOWER(p.designer_name) NOT LIKE '%e2e%'
+                    AND LOWER(p.designer_name) NOT LIKE '%idempotency%'
                 ))
             """
 
@@ -230,9 +230,9 @@ class ExcelExporter:
         where_clause = ""
         if exclude_test_data:
             where_clause = """
-                WHERE designer_name NOT ILIKE '%test%' 
-                  AND designer_name NOT ILIKE '%e2e%' 
-                  AND designer_name NOT ILIKE '%idempotency%'
+                WHERE LOWER(designer_name) NOT LIKE '%test%' 
+                  AND LOWER(designer_name) NOT LIKE '%e2e%' 
+                  AND LOWER(designer_name) NOT LIKE '%idempotency%'
             """
 
         query = text(f"""
@@ -279,14 +279,14 @@ class ExcelExporter:
         if exclude_test_data:
             where_clause = """
                 WHERE (p.project_name IS NULL OR (
-                    p.project_name NOT ILIKE '%test%' 
-                    AND p.project_name NOT ILIKE '%e2e%' 
-                    AND p.project_name NOT ILIKE '%idempotency%'
+                    LOWER(p.project_name) NOT LIKE '%test%' 
+                    AND LOWER(p.project_name) NOT LIKE '%e2e%' 
+                    AND LOWER(p.project_name) NOT LIKE '%idempotency%'
                 ))
                 AND (p.designer_name IS NULL OR (
-                    p.designer_name NOT ILIKE '%test%'
-                    AND p.designer_name NOT ILIKE '%e2e%'
-                    AND p.designer_name NOT ILIKE '%idempotency%'
+                    LOWER(p.designer_name) NOT LIKE '%test%'
+                    AND LOWER(p.designer_name) NOT LIKE '%e2e%'
+                    AND LOWER(p.designer_name) NOT LIKE '%idempotency%'
                 ))
             """
 

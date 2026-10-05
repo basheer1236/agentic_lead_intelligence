@@ -101,6 +101,22 @@ class PublicSearchTool:
         )
 
 
+class MockSearchProvider(SearchProvider):
+
+    def search(
+        self,
+        query: str,
+        max_results: int = 10,
+    ) -> list[dict]:
+        return [
+            {
+                "title": f"Profile - {query}",
+                "url": "https://example.com/designer-profile",
+                "snippet": f"Design studio portfolio and project records for {query}.",
+            }
+        ]
+
+
 def create_search_tool() -> PublicSearchTool:
 
     provider_name = (
@@ -108,8 +124,13 @@ def create_search_tool() -> PublicSearchTool:
     )
 
     if provider_name == "tavily":
+        if not settings.tavily_api_key:
+            provider = MockSearchProvider()
+        else:
+            provider = TavilySearchProvider()
 
-        provider = TavilySearchProvider()
+    elif provider_name in ("mock", "none"):
+        provider = MockSearchProvider()
 
     else:
 

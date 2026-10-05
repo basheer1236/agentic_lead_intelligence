@@ -11,6 +11,14 @@ pandas
 openpyxl
 sqlalchemy
 psycopg[binary]
+pg8000
 tenacity
 rapidfuzz
 playwright
+openai
+anthropic
+tavily-python
+alembic
+pytest
+fastapi
+uvicorn
