@@ -223,6 +223,7 @@ async def update_settings(req: SettingsUpdateRequest):
     if req.database_url is not None:
         update_key("DATABASE_URL", req.database_url)
         settings.database_url = req.database_url
+        os.environ["DATABASE_URL"] = req.database_url
         try:
             reset_db_engine(req.database_url)
         except Exception:
@@ -231,26 +232,32 @@ async def update_settings(req: SettingsUpdateRequest):
     if req.llm_provider is not None:
         update_key("LLM_PROVIDER", req.llm_provider)
         settings.llm_provider = req.llm_provider
+        os.environ["LLM_PROVIDER"] = req.llm_provider
 
     if req.llm_model is not None:
         update_key("LLM_MODEL", req.llm_model)
         settings.llm_model = req.llm_model
+        os.environ["LLM_MODEL"] = req.llm_model
 
     if req.llm_api_key is not None and req.llm_api_key.strip():
         update_key("LLM_API_KEY", req.llm_api_key.strip())
         settings.llm_api_key = req.llm_api_key.strip()
+        os.environ["LLM_API_KEY"] = req.llm_api_key.strip()
 
     if req.llm_base_url is not None:
         update_key("LLM_BASE_URL", req.llm_base_url.strip())
         settings.llm_base_url = req.llm_base_url.strip()
+        os.environ["LLM_BASE_URL"] = req.llm_base_url.strip()
 
     if req.search_provider is not None:
         update_key("SEARCH_PROVIDER", req.search_provider.strip())
         settings.search_provider = req.search_provider.strip()
+        os.environ["SEARCH_PROVIDER"] = req.search_provider.strip()
 
     if req.tavily_api_key is not None and req.tavily_api_key.strip():
         update_key("TAVILY_API_KEY", req.tavily_api_key.strip())
         settings.tavily_api_key = req.tavily_api_key.strip()
+        os.environ["TAVILY_API_KEY"] = req.tavily_api_key.strip()
 
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return {"success": True, "message": "Settings updated and saved to .env"}

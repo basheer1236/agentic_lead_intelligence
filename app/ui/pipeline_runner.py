@@ -172,6 +172,7 @@ class PipelineRunner:
             settings.llm_api_key = fresh.llm_api_key
             settings.llm_model = fresh.llm_model
             settings.llm_base_url = fresh.llm_base_url
+            settings.search_provider = fresh.search_provider
             settings.tavily_api_key = fresh.tavily_api_key
             settings.request_timeout_seconds = fresh.request_timeout_seconds
 
