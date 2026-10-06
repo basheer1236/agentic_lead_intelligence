@@ -205,26 +205,36 @@ class PipelineRunner:
             # -----------------------------------------------------------------
             self._update_stage(3, "Applying Residential Heuristic Filter", 30)
             self.add_log("STAGE", "[3/6] Filtering for residential architecture & interior design...")
-            candidates = filter_articles(unique_articles)
-            self.add_log("INFO", f"Identified {len(candidates)} residential candidate articles.")
+            residential_articles = filter_articles(unique_articles)
+            self.add_log("INFO", f"Identified {len(residential_articles)} residential articles.")
 
-            if not candidates:
-                self.add_log("WARN", "No residential candidates matched the heuristic filter.")
+            if not residential_articles:
+                self.add_log("WARN", "No residential articles matched the heuristic filter.")
                 self._finish(STATUS_COMPLETED)
                 return
 
-            # Determine batch candidates from batch size parameter
+            # Determine batch articles from batch size parameter
             limit = 1 if single_test_mode else batch_size
-            batch_candidates = candidates[:limit]
-            self.state["total_articles"] = len(batch_candidates)
+            batch_articles = residential_articles[:limit]
+            self.state["total_articles"] = len(batch_articles)
 
             # -----------------------------------------------------------------
             # Stage 4: Multi-Agent Analysis
             # -----------------------------------------------------------------
             self._update_stage(4, "Multi-Agent LangGraph Intelligence Analysis", 35)
-            self.add_log("STAGE", f"[4/6] Processing {len(batch_candidates)} candidates with LangGraph agents...")
+            self.add_log("STAGE", f"[4/6] Processing {len(batch_articles)} articles with LangGraph agents...")
 
-            for idx, article in enumerate(batch_candidates, start=1):
+            # Pre-flight check: validate LLM configuration before executing agents
+            provider = (settings.llm_provider or "openai").lower().strip()
+            if provider != "ollama" and (not settings.llm_api_key or not settings.llm_api_key.strip()):
+                self.add_log(
+                    "ERROR",
+                    "Pipeline stopped: Missing required LLM API key. Please configure LLM_API_KEY in Settings or your .env file."
+                )
+                self._finish(STATUS_FAILED)
+                return
+
+            for idx, article in enumerate(batch_articles, start=1):
                 if self._check_cancel():
                     return
 
@@ -232,14 +242,14 @@ class PipelineRunner:
                 url = article.get("url", "")
                 self.state["current_article"] = {
                     "index": idx,
-                    "total": len(batch_candidates),
+                    "total": len(batch_articles),
                     "title": title,
                     "url": url,
                 }
-                step_progress = 35 + int((idx / len(batch_candidates)) * 45)  # 35% -> 80%
+                step_progress = 35 + int((idx / len(batch_articles)) * 45)  # 35% -> 80%
                 self.state["progress_percent"] = step_progress
 
-                self.add_log("AGENT", f"Candidate [{idx}/{len(batch_candidates)}]: '{title[:65]}...'")
+                self.add_log("AGENT", f"Article [{idx}/{len(batch_articles)}]: '{title[:65]}...'")
                 self.state["metrics"]["evaluated"] += 1
                 self._broadcast("status", self.get_snapshot())
 
@@ -291,11 +301,24 @@ class PipelineRunner:
                         self.state["metrics"]["failed"] += 1
 
                 except Exception as exc:
-                    self.add_log("ERROR", f"Error on candidate [{idx}]: {exc}")
+                    err_msg = str(exc)
+                    self.add_log("ERROR", f"Error on article [{idx}]: {err_msg}")
                     self.state["metrics"]["failed"] += 1
+
+                    # If missing API key or fatal configuration error, halt pipeline immediately
+                    if "Missing required LLM API key" in err_msg or "InvalidConfigurationError" in err_msg:
+                        self.add_log("ERROR", "Fatal LLM configuration error. Halting pipeline execution.")
+                        self._finish(STATUS_FAILED)
+                        return
 
                 self._broadcast("status", self.get_snapshot())
                 time.sleep(3)
+
+            # If all articles failed in Stage 4, halt and mark pipeline as FAILED
+            if self.state["metrics"]["failed"] == len(batch_articles) and len(batch_articles) > 0:
+                self.add_log("ERROR", "All articles failed processing. Halting pipeline execution.")
+                self._finish(STATUS_FAILED)
+                return
 
             # -----------------------------------------------------------------
             # Stage 5: Database Persistence Finalized

@@ -1,1393 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agentic Lead Intelligence | Executive Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-main: #090d16;
-      --bg-surface: #101726;
-      --bg-surface-elevated: #162033;
-      --border-subtle: rgba(255, 255, 255, 0.08);
-      --border-hover: rgba(99, 102, 241, 0.35);
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --primary-glow: rgba(99, 102, 241, 0.25);
-      --accent-cyan: #06b6d4;
-      --accent-emerald: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-rose: #f43f5e;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-      line-height: 1.5;
-    }
-
-    /* Ambient background lighting */
-    .ambient-glow {
-      position: fixed;
-      width: 700px;
-      height: 700px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(6, 182, 212, 0.04) 50%, transparent 70%);
-      top: -200px;
-      left: 20%;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .ambient-glow-2 {
-      position: fixed;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 65%);
-      bottom: -150px;
-      right: 10%;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .container {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 24px 32px 60px 32px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Header */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--border-subtle);
-      margin-bottom: 28px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .brand-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 24px var(--primary-glow);
-    }
-
-    .brand-icon svg { width: 26px; height: 26px; fill: white; }
-
-    .brand-title {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .brand-subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-muted);
-    }
-
-    .badge-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent-emerald);
-      box-shadow: 0 0 10px var(--accent-emerald);
-    }
-
-    .badge-dot.pulse {
-      animation: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-
-    @keyframes pulse-ring {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.2); }
-    }
-
-    .btn-secondary {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
-      padding: 8px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-secondary:hover {
-      background: var(--bg-surface-elevated);
-      border-color: var(--border-hover);
-    }
-
-    /* Grid Layout */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 28px;
-      margin-bottom: 32px;
-    }
-
-    /* Control Deck */
-    .card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
-    }
-
-    .card-title-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .card-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .controls-wrapper {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 16px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-      color: white;
-      border: none;
-      padding: 12px 28px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 8px 24px var(--primary-glow);
-      transition: all 0.2s ease;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .btn-danger {
-      background: rgba(244, 63, 94, 0.12);
-      border: 1px solid rgba(244, 63, 94, 0.3);
-      color: #fda4af;
-      padding: 12px 22px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-danger:hover:not(:disabled) {
-      background: rgba(244, 63, 94, 0.22);
-    }
-
-    .btn-danger:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .control-select {
-      background: var(--bg-surface-elevated);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-    }
-
-    /* 6-Stage Process Pipeline */
-    .pipeline-section {
-      margin-top: 24px;
-    }
-
-    .progress-bar-container {
-      width: 100%;
-      height: 8px;
-      background: var(--bg-surface-elevated);
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 16px 0 24px 0;
-      position: relative;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #6366f1 0%, #06b6d4 70%, #10b981 100%);
-      border-radius: 10px;
-      transition: width 0.4s ease;
-    }
-
-    .stages-stepper {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 12px;
-      position: relative;
-    }
-
-    .stage-item {
-      background: var(--bg-surface-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 14px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: all 0.25s ease;
-      position: relative;
-    }
-
-    .stage-item.pending {
-      opacity: 0.45;
-    }
-
-    .stage-item.active {
-      opacity: 1;
-      border-color: var(--primary);
-      background: rgba(99, 102, 241, 0.08);
-      box-shadow: 0 0 20px var(--primary-glow);
-    }
-
-    .stage-item.completed {
-      opacity: 1;
-      border-color: rgba(16, 185, 129, 0.4);
-      background: rgba(16, 185, 129, 0.05);
-    }
-
-    .stage-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .stage-num {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      font-size: 11px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .stage-item.active .stage-num {
-      background: var(--primary);
-      color: white;
-    }
-
-    .stage-item.completed .stage-num {
-      background: var(--accent-emerald);
-      color: white;
-    }
-
-    .stage-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-main);
-      line-height: 1.3;
-    }
-
-    .stage-desc {
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-
-    /* Active Article Banner */
-    .current-article-box {
-      margin-top: 18px;
-      padding: 14px 18px;
-      background: rgba(99, 102, 241, 0.06);
-      border: 1px dashed rgba(99, 102, 241, 0.35);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .current-article-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .current-article-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .current-article-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-main);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 650px;
-    }
-
-    /* Metric Cards */
-    .metrics-col {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .metric-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 20px 22px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: all 0.2s ease;
-    }
-
-    .metric-card:hover {
-      border-color: var(--border-hover);
-    }
-
-    .metric-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-
-    .metric-value {
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      color: var(--text-main);
-    }
-
-    .metric-icon-wrap {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Live Terminal Console */
-    .terminal-card {
-      background: #060911;
-      border: 1px solid var(--border-subtle);
-      border-radius: 18px;
-      margin-bottom: 32px;
-      overflow: hidden;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .terminal-header {
-      background: #0d131f;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .terminal-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .terminal-body {
-      padding: 16px 20px;
-      height: 280px;
-      overflow-y: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12.5px;
-      line-height: 1.6;
-    }
-
-    .log-line {
-      display: flex;
-      gap: 12px;
-      padding: 2px 0;
-      word-break: break-all;
-    }
-
-    .log-time { color: var(--text-dim); }
-    .log-tag {
-      font-weight: 700;
-      padding: 0 6px;
-      border-radius: 4px;
-      font-size: 11px;
-    }
-    .log-tag.INFO { color: #94a3b8; background: rgba(148, 163, 184, 0.12); }
-    .log-tag.STAGE { color: #c084fc; background: rgba(192, 132, 252, 0.15); }
-    .log-tag.AGENT { color: #38bdf8; background: rgba(56, 189, 248, 0.15); }
-    .log-tag.SUCCESS { color: #34d399; background: rgba(52, 211, 153, 0.15); }
-    .log-tag.WARN { color: #fbbf24; background: rgba(251, 191, 36, 0.15); }
-    .log-tag.ERROR { color: #f87171; background: rgba(248, 113, 113, 0.18); }
-    .log-msg { color: #e2e8f0; flex: 1; }
-
-    /* Download & Export Cards */
-    .download-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      margin-bottom: 36px;
-    }
-
-    .export-hero-card {
-      background: linear-gradient(145deg, #101726 0%, #151e33 100%);
-      border: 1px solid var(--border-subtle);
-      border-radius: 18px;
-      padding: 28px;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.25s ease;
-    }
-
-    .export-hero-card:hover {
-      border-color: var(--primary);
-      transform: translateY(-3px);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-    }
-
-    .export-hero-content {
-      margin-bottom: 22px;
-    }
-
-    .export-hero-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--text-main);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .export-hero-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    .export-badges-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .mini-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #cbd5e1;
-    }
-
-    .btn-download-master {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      border: none;
-      padding: 13px 24px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-
-    .btn-download-master:hover {
-      box-shadow: 0 12px 26px rgba(16, 185, 129, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .btn-download-std {
-      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-      color: white;
-      border: none;
-      padding: 13px 24px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      box-shadow: 0 8px 20px var(--primary-glow);
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-
-    .btn-download-std:hover {
-      box-shadow: 0 12px 26px rgba(99, 102, 241, 0.4);
-      transform: translateY(-2px);
-    }
-
-    /* Leads Table */
-    .leads-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 18px;
-      padding: 24px;
-      margin-bottom: 40px;
-    }
-
-    .leads-table-wrap {
-      overflow-x: auto;
-      margin-top: 16px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 13px;
-    }
-
-    th {
-      padding: 12px 16px;
-      color: var(--text-dim);
-      font-weight: 700;
-      border-bottom: 1px solid var(--border-subtle);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    td {
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      color: var(--text-main);
-    }
-
-    tr:hover td {
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .score-pill {
-      font-weight: 700;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      display: inline-block;
-    }
-    .score-high { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-    .score-mid { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-    .score-low { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
-
-    /* Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      z-index: 100;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-backdrop.show { display: flex; }
-
-    .modal-dialog {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 20px;
-      width: 580px;
-      max-width: 95%;
-      padding: 28px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
-    }
-
-    .modal-title {
-      font-size: 18px;
-      font-weight: 800;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .form-group {
-      margin-bottom: 18px;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-
-    .form-input {
-      width: 100%;
-      background: var(--bg-surface-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 10px 14px;
-      color: var(--text-main);
-      font-size: 13px;
-      outline: none;
-    }
-
-    .form-input:focus {
-      border-color: var(--primary);
-    }
-
-    .form-hint {
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 5px;
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-top: 24px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead Opportunity Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#090d16;--s1:#101726;--s2:#162033;--line:rgba(255,255,255,.09);--pri:#6366f1;--cy:#06b6d4;--em:#10b981;--am:#f59e0b;--ro:#f43f5e;--tx:#f8fafc;--mu:#a3b1c6;--dim:#8493a8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font:14px/1.5 'Plus Jakarta Sans',system-ui,sans-serif;min-height:100vh}
+.wrap{max-width:1360px;margin:0 auto;padding:24px 28px 60px}
+:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:24px}
+h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--mu);font-size:13px}
+.row{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;background:var(--s1);border:1px solid var(--line);color:var(--mu)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--em)}
+.dot.run{background:var(--am);animation:pl 1.6s ease-in-out infinite}
+.dot.done{background:var(--em)}.dot.warn{background:var(--am)}.dot.bad{background:var(--ro)}
+@keyframes pl{50%{opacity:.35}}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--s1);border:1px solid var(--line);color:var(--tx);padding:9px 16px;border-radius:10px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--s2);border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);padding:12px 26px;font-size:14px;font-weight:700}
+.btn.pri:hover:not(:disabled){background:#4f46e5}
+.btn.stop{color:#fda4af;border-color:rgba(244,63,94,.4);padding:12px 22px;font-size:14px;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+svg{flex:none}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:24px;margin-bottom:28px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:24px}
+.ct{font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+select,input{background:var(--s2);border:1px solid var(--line);color:var(--tx);padding:10px 13px;border-radius:10px;font:inherit;font-size:13px}
+select{font-weight:600}
+.bar{height:8px;background:var(--s2);border-radius:8px;overflow:hidden;margin:12px 0 20px}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--pri),var(--cy));transition:width .4s}
+.fill.bad{background:var(--ro)}
+.fill.warn{background:var(--am)}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;list-style:none}
+.step{background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;opacity:.55}
+.step b{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.1);font-size:11px;display:grid;place-items:center}
+.step span{font-size:12px;font-weight:700;line-height:1.3}
+.step small{font-size:11px;color:var(--dim);line-height:1.35}
+.step.active{opacity:1;border-color:var(--pri);background:rgba(99,102,241,.1)}.step.active b{background:var(--pri)}
+.step.completed{opacity:1;border-color:rgba(16,185,129,.45)}.step.completed b{background:var(--em)}
+.step.failed{opacity:1;border-color:rgba(244,63,94,.45);background:rgba(244,63,94,.1)}.step.failed b{background:var(--ro)}
+.now{margin-top:16px;padding:12px 16px;border:1px dashed rgba(99,102,241,.45);border-radius:12px;display:none}
+.now small{color:var(--cy);font-weight:700;font-size:12px;display:block}
+.now div{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpis{display:flex;flex-direction:column;gap:14px}
+.kpi{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+.kpi small{color:var(--mu);font-weight:600;font-size:13px;display:block}
+.kpi strong{font-size:30px;font-weight:800;letter-spacing:-.03em}
+.kpi i{display:block;font-style:normal;font-size:11px;color:var(--dim)}
+.log{background:#060911;border:1px solid var(--line);border-radius:16px;margin-bottom:28px;overflow:hidden}
+.log header{margin:0;padding:11px 18px;background:#0d131f;border-bottom:1px solid var(--line);font-weight:600;color:var(--mu);font-size:13px}
+#logBody{height:240px;overflow-y:auto;padding:12px 18px;font:12.5px/1.6 'JetBrains Mono',monospace}
+.ll{display:flex;gap:10px;padding:1px 0}
+.lt{color:var(--dim)}.lv{padding:0 6px;border-radius:4px;font-size:11px;font-weight:600;background:rgba(148,163,184,.14);color:#cbd5e1;height:fit-content}
+.lv.SUCCESS{color:#34d399}.lv.WARN{color:#fbbf24}.lv.ERROR{color:#f87171}.lv.AGENT{color:#38bdf8}.lv.STAGE{color:#c084fc}
+.lm{flex:1;word-break:break-word}
+h2{font-size:18px;font-weight:800;margin-bottom:14px}
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}
+.dl p{color:var(--mu);margin:6px 0 16px}
+.dl h3{font-size:17px;font-weight:800}
+a.btn.pri{text-decoration:none;color:#fff}
+a.btn.ok{background:var(--em);border-color:var(--em)}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;text-align:left;min-width:720px}
+th{padding:10px 14px;color:var(--mu);font-size:12px;font-weight:700;border-bottom:1px solid var(--line);white-space:nowrap}
+th button{background:none;border:0;color:inherit;font:inherit;font-weight:700}
+td{padding:13px 14px;border-bottom:1px solid rgba(255,255,255,.05)}
+tr:hover td{background:rgba(255,255,255,.025)}
+.sp{font-weight:700;padding:3px 8px;border-radius:6px;font-size:12px}
+.hi{background:rgba(16,185,129,.16);color:#34d399}.md{background:rgba(245,158,11,.16);color:#fbbf24}.lo{background:rgba(148,163,184,.16);color:#b4c0d0}
+.empty{text-align:center;color:var(--dim);padding:30px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.show{display:flex}
+.dlg{background:var(--s1);border:1px solid var(--line);border-radius:18px;width:560px;max-width:100%;max-height:92vh;overflow:auto;padding:26px}
+.fg{margin-bottom:16px}.fg label{display:block;font-weight:600;color:var(--mu);margin-bottom:6px;font-size:13px}
+.fg input{width:100%}.fg small{display:block;color:var(--dim);font-size:12px;margin-top:4px}
+.foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+#toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:100}
+.toast{background:var(--s2);border:1px solid var(--line);border-left:4px solid var(--pri);padding:11px 16px;border-radius:10px;max-width:340px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.ok{border-left-color:var(--em)}.toast.err{border-left-color:var(--ro)}
+@media(max-width:1000px){.grid,.dl{grid-template-columns:1fr}.steps{grid-template-columns:repeat(2,1fr)}.kpis{display:grid;grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.wrap{padding:16px}.kpis{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.brand{display:flex;align-items:center;gap:16px}.brand-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#06b6d4);display:grid;place-items:center;box-shadow:0 8px 24px rgba(99,102,241,.25);flex:none}.kpi{display:flex;justify-content:space-between;align-items:center;gap:12px}.mi{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;flex:none}
+</style>
 </head>
 <body>
-  <div class="ambient-glow"></div>
-  <div class="ambient-glow-2"></div>
+<div class="wrap">
+<header>
+  <div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24" width="26" height="26" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+  <div>
+    <h1>Lead Opportunity Engine</h1>
+    <p class="sub">Finds designers and rug-placement chances in Architectural Digest India articles</p>
+  </div></div>
+  <div class="row">
+    <div class="badge" role="status"><span class="dot" id="dot"></span><span id="statusLabel">Ready</span></div>
+    <div class="badge" title="The AI model reading the articles"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>AI model: <span id="modelLabel">gemini-flash-latest</span></div>
+    <div class="badge" title="Where your leads are saved"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Saved in: <span id="dbLabel">Neon Cloud database</span></div>
+    <button class="btn" onclick="openSettings()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
+  </div>
+</header>
 
-  <div class="container">
-    <!-- Header -->
-    <header>
-      <div class="brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        </div>
-        <div>
-          <h1 class="brand-title">Agentic Lead Intelligence</h1>
-          <p class="brand-subtitle">Architectural Digest India Pipeline & Rug Placement Opportunity Engine</p>
-        </div>
-      </div>
-
-      <div class="header-actions">
-        <div class="badge">
-          <div class="badge-dot" id="statusDot"></div>
-          <span id="statusLabel">System Ready</span>
-        </div>
-        <div class="badge" title="Active Model">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          <span id="modelLabel">openrouter/free</span>
-        </div>
-        <div class="badge" id="dbBadge" title="Current Storage">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-          <span id="dbLabel">Neon PostgreSQL</span>
-        </div>
-        <button class="btn-secondary" onclick="openSettingsModal()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Settings
-        </button>
-      </div>
-    </header>
-
-    <!-- Top Grid: Control Deck + Live Metrics -->
-    <div class="dashboard-grid">
-      <!-- Control Deck -->
-      <div class="card">
-        <div class="card-title-row">
-          <div class="card-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Pipeline Orchestration Deck
-          </div>
-          <span style="font-size: 13px; color: var(--text-dim);" id="elapsedTimer">00:00</span>
-        </div>
-
-        <div class="controls-wrapper">
-          <button class="btn-primary" id="startBtn" onclick="triggerPipeline()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <span>Trigger Pipeline Run</span>
-          </button>
-
-          <button class="btn-danger" id="stopBtn" onclick="stopPipeline()" disabled>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-            <span>Abort Run</span>
-          </button>
-
-          <div class="control-group">
-            <label for="batchSize">Batch Size:</label>
-            <select class="control-select" id="batchSize">
-              <option value="1">1 Article (Rapid Test)</option>
-              <option value="3">3 Articles</option>
-              <option value="5" selected>5 Articles (Recommended)</option>
-              <option value="10">10 Articles (Full Batch)</option>
-              <option value="25">25 Articles (Deep Scan)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- 6-Stage Process Visualizer -->
-        <div class="pipeline-section">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);" id="stageDetailLabel">Awaiting trigger...</span>
-            <span style="font-size: 13px; font-weight: 800; color: var(--accent-cyan);" id="progressText">0%</span>
-          </div>
-
-          <div class="progress-bar-container">
-            <div class="progress-bar-fill" id="progressBar"></div>
-          </div>
-
-          <div class="stages-stepper">
-            <div class="stage-item pending" id="stage1">
-              <div class="stage-header">
-                <span class="stage-num">1</span>
-                <span class="stage-desc">RSS</span>
-              </div>
-              <span class="stage-title">Feed Ingestion</span>
-            </div>
-
-            <div class="stage-item pending" id="stage2">
-              <div class="stage-header">
-                <span class="stage-num">2</span>
-                <span class="stage-desc">Hash</span>
-              </div>
-              <span class="stage-title">Deduplication</span>
-            </div>
-
-            <div class="stage-item pending" id="stage3">
-              <div class="stage-header">
-                <span class="stage-num">3</span>
-                <span class="stage-desc">Gate</span>
-              </div>
-              <span class="stage-title">Heuristic Filter</span>
-            </div>
-
-            <div class="stage-item pending" id="stage4">
-              <div class="stage-header">
-                <span class="stage-num">4</span>
-                <span class="stage-desc">Agents</span>
-              </div>
-              <span class="stage-title">LangGraph AI</span>
-            </div>
-
-            <div class="stage-item pending" id="stage5">
-              <div class="stage-header">
-                <span class="stage-num">5</span>
-                <span class="stage-desc">Relational</span>
-              </div>
-              <span class="stage-title">Persistence</span>
-            </div>
-
-            <div class="stage-item pending" id="stage6">
-              <div class="stage-header">
-                <span class="stage-num">6</span>
-                <span class="stage-desc">Sheets</span>
-              </div>
-              <span class="stage-title">Excel Export</span>
-            </div>
-          </div>
-
-          <div class="current-article-box" id="articleBanner" style="display: none;">
-            <div class="current-article-info">
-              <span class="current-article-label" id="articleProgressTag">Processing Candidate 1/5</span>
-              <span class="current-article-title" id="articleTitleText">Parsing Article...</span>
-            </div>
-            <div class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">Multi-Agent Extraction</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Live KPI Metrics Column -->
-      <div class="metrics-col">
-        <div class="metric-card">
-          <div>
-            <div class="metric-label">Evaluated Articles</div>
-            <div class="metric-value" id="kpiEvaluated">0</div>
-          </div>
-          <div class="metric-icon-wrap" style="background: rgba(99, 102, 241, 0.12); color: #818cf8;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div>
-            <div class="metric-label">Qualified Leads Saved</div>
-            <div class="metric-value" style="color: var(--accent-emerald);" id="kpiPersisted">0</div>
-          </div>
-          <div class="metric-icon-wrap" style="background: rgba(16, 185, 129, 0.12); color: #34d399;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div>
-            <div class="metric-label">Rug Opportunities</div>
-            <div class="metric-value" style="color: var(--accent-cyan);" id="kpiRugs">0</div>
-          </div>
-          <div class="metric-icon-wrap" style="background: rgba(6, 182, 212, 0.12); color: #22d3ee;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div>
-            <div class="metric-label">Filtered / Non-Residential</div>
-            <div class="metric-value" style="color: var(--text-dim);" id="kpiIrrelevant">0</div>
-          </div>
-          <div class="metric-icon-wrap" style="background: rgba(255, 255, 255, 0.05); color: #94a3b8;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-          </div>
-        </div>
-      </div>
+<div class="grid">
+  <section class="card" aria-labelledby="t1">
+    <div class="ct"><span id="t1" class="row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>Find new leads</span><span class="sub" id="timer" aria-label="Time elapsed">00:00</span></div>
+    <div class="ctrl">
+      <button class="btn pri" id="startBtn" onclick="startRun()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>Start search</button>
+      <button class="btn stop" id="stopBtn" onclick="stopRun()" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Stop</button>
+      <label class="row sub" for="batch">Articles to check:
+        <select id="batch">
+          <option value="1">1 (quick test)</option>
+          <option value="3">3</option>
+          <option value="5" selected>5 (recommended)</option>
+          <option value="10">10</option>
+          <option value="25">25 (thorough, slower)</option>
+        </select>
+      </label>
     </div>
-
-    <!-- Live Execution Console -->
-    <div class="terminal-card">
-      <div class="terminal-header">
-        <div class="terminal-title">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-          Real-Time Execution Telemetry
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="clearLogs()">Clear Console</button>
-        </div>
-      </div>
-      <div class="terminal-body" id="terminalBody">
-        <div class="log-line">
-          <span class="log-time">[SYSTEM]</span>
-          <span class="log-tag INFO">READY</span>
-          <span class="log-msg">Agentic Lead Intelligence dashboard initialized. Ready to execute pipeline.</span>
-        </div>
-      </div>
+    <div style="margin-top:20px">
+      <div class="row" style="justify-content:space-between"><b class="sub" id="stageLabel">Waiting to start</b><b style="color:var(--cy)" id="pct">0%</b></div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barWrap"><div class="fill" id="bar"></div></div>
+      <ol class="steps">
+        <li class="step" id="stage1"><b>1</b><span>Collect articles</span><small>Gets the latest articles from the magazine</small></li>
+        <li class="step" id="stage2"><b>2</b><span>Skip repeats</span><small>Ignores articles already checked</small></li>
+        <li class="step" id="stage3"><b>3</b><span>Pick relevant ones</span><small>Keeps only home and design projects</small></li>
+        <li class="step" id="stage4"><b>4</b><span>Read the article</span><small>AI pulls out designer, owner and rug details</small></li>
+        <li class="step" id="stage5"><b>5</b><span>Save leads</span><small>Stores the results in your database</small></li>
+        <li class="step" id="stage6"><b>6</b><span>Create Excel files</span><small>Builds the downloadable reports</small></li>
+      </ol>
+      <div class="now" id="now"><small id="nowTag"></small><div id="nowTitle"></div></div>
     </div>
+  </section>
 
-    <!-- Download & Export Center -->
-    <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Excel Artifacts & Business Deliverables
-    </h2>
+  <div class="kpis" aria-label="Results so far">
+    <div class="kpi"><div><small>Articles checked</small><strong id="kEval">0</strong></div><div class="mi" style="background:rgba(99,102,241,.12);color:#818cf8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
+    <div class="kpi"><div><small>Good leads found</small><strong id="kLeads" style="color:var(--em)">0</strong><i>Saved to your database</i></div><div class="mi" style="background:rgba(16,185,129,.12);color:#34d399"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div>
+    <div class="kpi"><div><small>Rug-placement chances</small><strong id="kRugs" style="color:var(--cy)">0</strong><i>Leads where a rug could be sold</i></div><div class="mi" style="background:rgba(6,182,212,.12);color:#22d3ee"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div></div>
+    <div class="kpi"><div><small>Skipped (not relevant)</small><strong id="kSkip" style="color:var(--mu)">0</strong></div><div class="mi" style="background:rgba(255,255,255,.05);color:#94a3b8"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div></div>
+  </div>
+</div>
 
-    <div class="download-grid">
-      <!-- Master Report Card -->
-      <div class="export-hero-card">
-        <div class="export-hero-content">
-          <div class="export-hero-title">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            Lead Intelligence Master Report
-          </div>
-          <p class="export-hero-desc">
-            Complete executive workbook with 4 relationally linked worksheets: Documentation README, Lead Intelligence Master, Interior Designer Directory, and Rug Placement Opportunity Tracker.
-          </p>
-          <div class="export-badges-row">
-            <span class="mini-badge">4 Worksheets</span>
-            <span class="mini-badge">Relational Hyperlinks</span>
-            <span class="mini-badge">Master Analytics</span>
-          </div>
-        </div>
-        <a href="/api/exports/download/lead_intelligence_master.xlsx" class="btn-download-master" id="downloadMasterBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download Master Excel (.xlsx)
-        </a>
-      </div>
+<section class="log" aria-label="Activity log">
+  <header class="row" style="justify-content:space-between"><span class="row" style="gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>Activity log</span><button class="btn" style="padding:4px 10px;font-size:11px" onclick="logBody.innerHTML=''">Clear log</button></header>
+  <div id="logBody" role="log" aria-live="off"><div class="ll"><span class="lt">[now]</span><span class="lv">READY</span><span class="lm">Ready. Choose how many articles to check, then press Start search.</span></div></div>
+</section>
 
-      <!-- Standard Report Card -->
-      <div class="export-hero-card">
-        <div class="export-hero-content">
-          <div class="export-hero-title">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-            Standard CRM Lead Export
-          </div>
-          <p class="export-hero-desc">
-            Streamlined tabular view structured for direct import into CRM systems (Salesforce, HubSpot, Notion). Contains designer profiles, verified contact URLs, and lead scores.
-          </p>
-          <div class="export-badges-row">
-            <span class="mini-badge">CRM Ready</span>
-            <span class="mini-badge">Clean Tabular</span>
-            <span class="mini-badge">Single Sheet</span>
-          </div>
-        </div>
-        <a href="/api/exports/download/lead_intelligence.xlsx" class="btn-download-std" id="downloadStdBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download Standard Export (.xlsx)
-        </a>
-      </div>
-    </div>
+<h2 class="row" style="gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download your leads</h2>
+<div class="dl">
+  <div class="card">
+    <h3 class="row" style="gap:10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Full report</h3>
+    <p>An Excel file with 4 sheets: a guide, all leads, a list of designers, and rug-placement chances. Sheets link to each other.</p>
+    <a class="btn pri ok" href="/api/exports/download/lead_intelligence_master.xlsx"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download full report (.xlsx)</a>
+  </div>
+  <div class="card">
+    <h3 class="row" style="gap:10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>Simple lead list</h3>
+    <p>One clean sheet with designer details, contact links and lead quality, ready to import into your CRM (Salesforce, HubSpot, Notion).</p>
+    <a class="btn pri" href="/api/exports/download/lead_intelligence.xlsx"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download simple list (.xlsx)</a>
+  </div>
+</div>
 
-    <!-- Live Leads Database Preview Table -->
-    <div class="leads-card">
-      <div class="card-title-row">
-        <div class="card-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-          Extracted Leads Database Preview
-        </div>
-        <button class="btn-secondary" onclick="loadLeadsPreview()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Refresh Data
-        </button>
-      </div>
-
-      <div class="leads-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Project Name</th>
-              <th>Designer / Studio</th>
-              <th>Location</th>
-              <th>Homeowner</th>
-              <th>Lead Score</th>
-              <th>Rug Opportunity</th>
-            </tr>
-          </thead>
-          <tbody id="leadsTableBody">
-            <tr>
-              <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 32px;">
-                Click "Refresh Data" or run the pipeline to populate leads preview.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+<section class="card" aria-labelledby="t2">
+  <div class="ct"><span id="t2" class="row"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Latest leads</span>
+    <div class="tools">
+      <input type="search" id="q" placeholder="Search leads" aria-label="Search leads" oninput="renderLeads()">
+      <button class="btn" onclick="loadLeads(true)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Refresh</button>
     </div>
   </div>
+  <div class="tw"><table>
+    <thead><tr>
+      <th>Project</th><th>Designer / studio</th><th>Location</th><th>Homeowner</th>
+      <th aria-sort="none" id="thScore"><button onclick="sortBy('lead_score')" title="Sort by lead quality">Lead quality ⇅</button></th>
+      <th><button onclick="sortBy('rug_opportunity_score')" title="Sort by rug chance">Rug chance ⇅</button></th>
+    </tr></thead>
+    <tbody id="rows"><tr><td colspan="6" class="empty">No leads loaded yet. Press Refresh, or start a search.</td></tr></tbody>
+  </table></div>
+  <p class="sub" style="margin-top:10px">Lead quality and rug chance are scored out of 100. 70 or more is a strong lead.</p>
+</section>
+</div>
 
-  <!-- Settings & Database Connection Modal -->
-  <div class="modal-backdrop" id="settingsModal">
-    <div class="modal-dialog">
-      <div class="modal-title">
-        <span>Pipeline & Database Configuration</span>
-        <button style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px;" onclick="closeSettingsModal()">&times;</button>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Database Connection URL</label>
-        <input type="text" class="form-input" id="cfgDbUrl" placeholder="postgresql://user:password@ep-sample-123456.us-east-2.aws.neon.tech/neondb?sslmode=require">
-        <p class="form-hint">
-          Connects directly to <strong>Neon PostgreSQL</strong> cloud database. Ensure <code>?sslmode=require</code> is included in your Neon connection string.
-        </p>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">LLM Provider</label>
-        <input type="text" class="form-input" id="cfgProvider" placeholder="openrouter">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">LLM Model</label>
-        <input type="text" class="form-input" id="cfgModel" placeholder="openrouter/free">
-        <p class="form-hint">Use <code>openrouter/free</code> for 0-credit free tier or any model on your OpenRouter account.</p>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">LLM API Key</label>
-        <input type="password" class="form-input" id="cfgApiKey" placeholder="sk-or-v1-...">
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeSettingsModal()">Cancel</button>
-        <button class="btn-primary" onclick="saveSettings()">Save & Apply</button>
-      </div>
-    </div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+  <div class="dlg">
+    <div class="ct"><span id="mt">Settings</span><button class="btn" style="padding:2px 10px;font-size:18px" onclick="closeSettings()" aria-label="Close settings">&times;</button></div>
+    <div class="fg"><label for="cDb">Database address</label><input id="cDb" autocomplete="off" placeholder="postgresql://user:password@host/dbname?sslmode=require">
+      <small>Where leads are saved. Your password is hidden; leave it as it is to keep the current database.</small></div>
+    <div class="fg"><label for="cProv">AI service</label><input id="cProv" placeholder="gemini"></div>
+    <div class="fg"><label for="cModel">AI model</label><input id="cModel" placeholder="gemini-flash-latest"><small>e.g. gemini-flash-latest, llama-3.3-70b-versatile, or openai/gpt-4o-mini</small></div>
+    <div class="fg"><label for="cKey">AI access key</label><input id="cKey" type="password" autocomplete="new-password" placeholder="AIzaSy... or sk-..."><small>Leave unchanged to keep the saved key.</small></div>
+    <div class="foot"><button class="btn" onclick="closeSettings()">Cancel</button><button class="btn pri" onclick="saveSettings()">Save settings</button></div>
   </div>
+</div>
+<div id="toasts" aria-live="polite"></div>
 
-  <script>
-    let timerInterval = null;
-    let sseSource = null;
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>s==null?'':String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LEVELS=['INFO','STAGE','AGENT','SUCCESS','WARN','ERROR'];
+let sse=null,retry=null,tick=null,startedAt=0,leads=[],sort={key:null,dir:-1},lastStatus='',lastFocus=null,maskedDb='';
 
-    // Load initial status on load
-    window.addEventListener('DOMContentLoaded', () => {
-      loadSettingsSummary();
-      fetchStatus();
-      loadLeadsPreview();
-      connectSSE();
-    });
+function toast(msg,type=''){const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;$('toasts').appendChild(t);setTimeout(()=>t.remove(),4500)}
+async function api(url,opt){const r=await fetch(url,opt);let d=null;try{d=await r.json()}catch(e){}if(!r.ok)throw new Error((d&&d.detail)||'Request failed ('+r.status+')');return d}
 
-    async function loadSettingsSummary() {
-      try {
-        const res = await fetch('/api/settings');
-        const cfg = await res.json();
-        if (cfg.llm_model) {
-          document.getElementById('modelLabel').textContent = cfg.llm_model;
-        }
-        if (cfg.database_url) {
-          const u = cfg.database_url.toLowerCase();
-          if (u.includes('neon.tech') || u.includes('neon')) {
-            document.getElementById('dbLabel').textContent = 'Neon PostgreSQL (Cloud)';
-          } else if (u.includes('postgresql')) {
-            document.getElementById('dbLabel').textContent = 'PostgreSQL';
-          } else if (u.includes('sqlite')) {
-            document.getElementById('dbLabel').textContent = 'SQLite';
-          }
-        }
-      } catch (err) {}
-    }
+addEventListener('DOMContentLoaded',()=>{loadSummary();fetchStatus();loadLeads();connect()});
 
-    function connectSSE() {
-      if (sseSource) sseSource.close();
-      sseSource = new EventSource('/api/pipeline/stream');
+async function loadSummary(){try{const c=await api('/api/settings');if(c.llm_model)$('modelLabel').textContent=c.llm_model;
+  const u=(c.database_url||'').toLowerCase();$('dbLabel').textContent=u.includes('neon')?'Neon cloud database':u.includes('sqlite')?'Local file (SQLite)':u.includes('postgres')?'PostgreSQL database':'Not set'}catch(e){}}
 
-      sseSource.onmessage = (e) => {
-        try {
-          const evt = JSON.parse(e.data);
-          if (evt.type === 'log') {
-            appendLog(evt.data);
-          } else if (evt.type === 'status') {
-            updateUIState(evt.data);
-          }
-        } catch (err) {
-          console.error('SSE Error:', err);
-        }
-      };
+function connect(){if(sse)sse.close();clearTimeout(retry);sse=new EventSource('/api/pipeline/stream');
+  sse.onmessage=e=>{try{const v=JSON.parse(e.data);if(v.type==='log')addLog(v.data);else if(v.type==='status')render(v.data)}catch(x){}};
+  sse.onerror=()=>{sse.close();retry=setTimeout(connect,3000)}}
 
-      sseSource.onerror = () => {
-        setTimeout(connectSSE, 3000);
-      };
-    }
+async function fetchStatus(){try{render(await api('/api/pipeline/status'))}catch(e){}}
 
-    async function fetchStatus() {
-      try {
-        const res = await fetch('/api/pipeline/status');
-        const data = await res.json();
-        updateUIState(data);
-      } catch (err) {
-        console.error('Status fetch failed:', err);
-      }
-    }
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0')}
 
-    function updateUIState(state) {
-      const status = (state.status || 'IDLE').toUpperCase();
-      const isRunning = status === 'RUNNING';
+function render(s){
+  const st=(s.status||'IDLE').toUpperCase(),run=st==='RUNNING',failed=st==='FAILED',aborted=st==='ABORTED';
+  $('startBtn').disabled=run;$('stopBtn').disabled=!run;$('batch').disabled=run;
+  const map={RUNNING:['Searching…','run'],COMPLETED:['Finished','done'],ABORTED:['Stopped','warn'],FAILED:['Stopped (Error)','bad']};
+  const m=map[st]||['Ready',''];$('statusLabel').textContent=m[0];$('dot').className='dot '+m[1];
+  const p=Math.max(0,Math.min(100,s.progress_percent||0));
+  $('bar').style.width=p+'%';$('pct').textContent=p+'%';$('barWrap').setAttribute('aria-valuenow',p);
+  $('bar').className='fill '+(failed?'bad':aborted?'warn':'');
+  $('stageLabel').textContent=s.stage_name||(run?'Working…':failed?'Pipeline halted due to error':aborted?'Stopped by operator':'Waiting to start');
+  const cur=s.current_stage||0;
+  for(let i=1;i<=6;i++){
+    const done=i<cur||(st==='COMPLETED'&&cur>0);
+    const isCur=i===cur;
+    $('stage'+i).className='step '+(done?'completed':(isCur&&run?'active':(isCur&&failed?'failed':'')));
+  }
+  const a=s.current_article;
+  if(run&&a){$('now').style.display='block';$('nowTag').textContent='Reading article '+a.index+' of '+a.total;$('nowTitle').textContent=a.title||''}else $('now').style.display='none';
+  const k=s.metrics;if(k){$('kEval').textContent=k.evaluated||0;$('kLeads').textContent=k.persisted||0;$('kRugs').textContent=k.rugs_found||0;$('kSkip').textContent=k.irrelevant||0}
+  if(run){if(!tick){startedAt=Date.now()-(s.elapsed_seconds||0)*1000;tick=setInterval(()=>$('timer').textContent=fmt((Date.now()-startedAt)/1000),1000)}}
+  else{if(tick){clearInterval(tick);tick=null}if(s.elapsed_seconds!=null)$('timer').textContent=fmt(s.elapsed_seconds)}
+  if(lastStatus==='RUNNING'&&!run){loadLeads();if(st==='COMPLETED')toast('Search finished. Your files are ready to download.','ok');else if(st==='FAILED')toast('The search was stopped due to an error. Check the activity log.','err')}
+  lastStatus=st;
+}
 
-      // Controls
-      document.getElementById('startBtn').disabled = isRunning;
-      document.getElementById('stopBtn').disabled = !isRunning;
-      document.getElementById('batchSize').disabled = isRunning;
+function addLog(l){const lv=LEVELS.includes(l.level)?l.level:'INFO',b=$('logBody'),stick=b.scrollTop+b.clientHeight>=b.scrollHeight-30;
+  const r=document.createElement('div');r.className='ll';
+  r.innerHTML='<span class="lt">['+esc(l.timestamp)+']</span><span class="lv '+lv+'">'+lv+'</span><span class="lm">'+esc(l.message)+'</span>';
+  b.appendChild(r);while(b.children.length>500)b.removeChild(b.firstChild);if(stick)b.scrollTop=b.scrollHeight}
 
-      // Status Badge
-      const statusLabel = document.getElementById('statusLabel');
-      const statusDot = document.getElementById('statusDot');
+async function startRun(){$('timer').textContent='00:00';
+  const val=+$('batch').value;
+  try{await api('/api/pipeline/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({batch_size:val,single_test_mode:val===1})});toast('Search started','ok')}
+  catch(e){toast('Could not start: '+e.message,'err')}}
+async function stopRun(){if(!confirm('Stop the search now? Leads already saved will be kept.'))return;
+  try{await api('/api/pipeline/abort',{method:'POST'});toast('Stopping after the current article…')}catch(e){toast('Could not stop: '+e.message,'err')}}
 
-      if (isRunning) {
-        statusLabel.textContent = 'Pipeline Running...';
-        statusDot.className = 'badge-dot pulse';
-        statusDot.style.background = '#f59e0b';
-        statusDot.style.boxShadow = '0 0 10px #f59e0b';
-      } else if (status === 'COMPLETED') {
-        statusLabel.textContent = 'Run Completed';
-        statusDot.className = 'badge-dot';
-        statusDot.style.background = '#10b981';
-        statusDot.style.boxShadow = '0 0 10px #10b981';
-      } else if (status === 'ABORTED') {
-        statusLabel.textContent = 'Run Aborted';
-        statusDot.className = 'badge-dot';
-        statusDot.style.background = '#f59e0b';
-        statusDot.style.boxShadow = '0 0 10px #f59e0b';
-      } else if (status === 'FAILED') {
-        statusLabel.textContent = 'Run Failed';
-        statusDot.className = 'badge-dot';
-        statusDot.style.background = '#f43f5e';
-        statusDot.style.boxShadow = '0 0 10px #f43f5e';
-      } else {
-        statusLabel.textContent = 'System Ready';
-        statusDot.className = 'badge-dot';
-        statusDot.style.background = '#10b981';
-        statusDot.style.boxShadow = '0 0 10px #10b981';
-      }
+async function loadLeads(manual){try{leads=await api('/api/leads/preview')||[];renderLeads();if(manual)toast('Leads refreshed','ok')}catch(e){$('rows').innerHTML='<tr><td colspan="6" class="empty">Could not load leads. Check that the server is running, then press Refresh.</td></tr>'}}
+function sortBy(k){sort.dir=sort.key===k?-sort.dir:-1;sort.key=k;renderLeads()}
+function renderLeads(){
+  const q=$('q').value.trim().toLowerCase();
+  let r=leads.filter(l=>!q||[l.project_name,l.designer_name,l.designer_studio,l.location,l.homeowner_name].join(' ').toLowerCase().includes(q));
+  if(sort.key)r=[...r].sort((a,b)=>((a[sort.key]||0)-(b[sort.key]||0))*sort.dir);
+  if(!r.length){$('rows').innerHTML='<tr><td colspan="6" class="empty">'+(leads.length?'No leads match your search.':'No leads yet. Press Start search to find some.')+'</td></tr>';return}
+  $('rows').innerHTML=r.map(l=>{const s=l.lead_score,c=s>=70?'hi':s>=40?'md':'lo',g=l.rug_opportunity_score;
+    const d=[l.designer_name,l.designer_studio].filter(Boolean).map(esc).join(' · ')||'Not named';
+    return '<tr><td><b>'+esc(l.project_name||'Untitled project')+'</b></td><td>'+d+'</td><td>'+esc(l.location||'India')+'</td><td>'+esc(l.homeowner_name||'Not named')+'</td><td>'+(s==null?'—':'<span class="sp '+c+'">'+s+'/100</span>')+'</td><td>'+(g>0?'Yes · '+g+'/100':'None found')+'</td></tr>'}).join('')}
 
-      // Progress bar & label
-      const progress = state.progress_percent || 0;
-      document.getElementById('progressBar').style.width = progress + '%';
-      document.getElementById('progressText').textContent = progress + '%';
-      document.getElementById('stageDetailLabel').textContent = state.stage_name || 'Idle';
+async function openSettings(){try{const c=await api('/api/settings');lastFocus=document.activeElement;
+  maskedDb=(c.database_url||'').replace(/(:\/\/[^:\/@]+:)[^@]*@/,'$1••••••@');
+  $('cDb').value=maskedDb;$('cProv').value=c.llm_provider||'';$('cModel').value=c.llm_model||'';$('cKey').value=c.has_api_key?'••••••••••••':'';
+  $('modal').classList.add('show');$('cDb').focus()}catch(e){toast('Could not load settings: '+e.message,'err')}}
+function closeSettings(){$('modal').classList.remove('show');if(lastFocus)lastFocus.focus()}
+async function saveSettings(){const p={llm_provider:$('cProv').value.trim(),llm_model:$('cModel').value.trim()};
+  const db=$('cDb').value.trim(),key=$('cKey').value.trim();
+  if(db&&db!==maskedDb)p.database_url=db;
+  if(key&&!key.startsWith('••'))p.llm_api_key=key;
+  try{await api('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});toast('Settings saved','ok');closeSettings();loadSummary()}
+  catch(e){toast('Could not save: '+e.message,'err')}}
 
-      // Stepper items (1 to 6)
-      const currentStage = state.current_stage || 0;
-      for (let i = 1; i <= 6; i++) {
-        const el = document.getElementById('stage' + i);
-        if (i < currentStage) {
-          el.className = 'stage-item completed';
-        } else if (i === currentStage && isRunning) {
-          el.className = 'stage-item active';
-        } else {
-          el.className = 'stage-item pending';
-        }
-      }
-
-      // Current article banner
-      const banner = document.getElementById('articleBanner');
-      if (isRunning && state.current_article) {
-        banner.style.display = 'flex';
-        document.getElementById('articleProgressTag').textContent = 
-          `Processing Candidate ${state.current_article.index} of ${state.current_article.total}`;
-        document.getElementById('articleTitleText').textContent = state.current_article.title;
-      } else {
-        banner.style.display = 'none';
-      }
-
-      // KPI Metrics
-      if (state.metrics) {
-        document.getElementById('kpiEvaluated').textContent = state.metrics.evaluated || 0;
-        document.getElementById('kpiPersisted').textContent = state.metrics.persisted || 0;
-        document.getElementById('kpiRugs').textContent = state.metrics.rugs_found || 0;
-        document.getElementById('kpiIrrelevant').textContent = state.metrics.irrelevant || 0;
-      }
-
-      // Timer
-      if (isRunning && !timerInterval) {
-        startTimer(state.elapsed_seconds || 0);
-      } else if (!isRunning && timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-    }
-
-    function startTimer(initialSeconds) {
-      let seconds = initialSeconds;
-      const el = document.getElementById('elapsedTimer');
-      if (timerInterval) clearInterval(timerInterval);
-
-      timerInterval = setInterval(() => {
-        seconds++;
-        const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-        const secs = String(seconds % 60).padStart(2, '0');
-        el.textContent = `${mins}:${secs}`;
-      }, 1000);
-    }
-
-    function appendLog(log) {
-      const body = document.getElementById('terminalBody');
-      const row = document.createElement('div');
-      row.className = 'log-line';
-      row.innerHTML = `
-        <span class="log-time">[${log.timestamp}]</span>
-        <span class="log-tag ${log.level}">${log.level}</span>
-        <span class="log-msg">${escapeHtml(log.message)}</span>
-      `;
-      body.appendChild(row);
-      body.scrollTop = body.scrollHeight;
-    }
-
-    function clearLogs() {
-      document.getElementById('terminalBody').innerHTML = '';
-    }
-
-    async function triggerPipeline() {
-      const batchSize = parseInt(document.getElementById('batchSize').value, 10);
-      try {
-        const res = await fetch('/api/pipeline/run', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ batch_size: batchSize })
-        });
-        const data = await res.json();
-        if (!res.ok) alert(data.detail || 'Could not start pipeline');
-      } catch (err) {
-        alert('Failed to connect to server: ' + err);
-      }
-    }
-
-    async function stopPipeline() {
-      try {
-        await fetch('/api/pipeline/abort', { method: 'POST' });
-      } catch (err) {
-        console.error('Stop request failed:', err);
-      }
-    }
-
-    async function loadLeadsPreview() {
-      try {
-        const res = await fetch('/api/leads/preview');
-        const leads = await res.json();
-        const tbody = document.getElementById('leadsTableBody');
-
-        if (!leads || leads.length === 0) {
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 32px;">
-                No leads recorded yet. Trigger the pipeline to populate intelligence records!
-              </td>
-            </tr>`;
-          return;
-        }
-
-        tbody.innerHTML = leads.map(lead => {
-          const scoreClass = (lead.lead_score || 0) >= 70 ? 'score-high' : ((lead.lead_score || 0) >= 40 ? 'score-mid' : 'score-low');
-          return `
-            <tr>
-              <td><strong>${escapeHtml(lead.project_name || 'Project')}</strong></td>
-              <td>${escapeHtml(lead.designer_name || 'Independent')} (${escapeHtml(lead.designer_studio || 'Studio')})</td>
-              <td>${escapeHtml(lead.location || 'India')}</td>
-              <td>${escapeHtml(lead.homeowner_name || 'Not Disclosed')}</td>
-              <td><span class="score-pill ${scoreClass}">${lead.lead_score || 0}/100</span></td>
-              <td>${lead.rug_opportunity_score > 0 ? '✓ ' + lead.rug_opportunity_score + '/100' : 'None Identified'}</td>
-            </tr>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('Error loading leads preview:', err);
-      }
-    }
-
-    // Settings Modal
-    async function openSettingsModal() {
-      try {
-        const res = await fetch('/api/settings');
-        const cfg = await res.json();
-        document.getElementById('cfgDbUrl').value = cfg.database_url || '';
-        document.getElementById('cfgProvider').value = cfg.llm_provider || '';
-        document.getElementById('cfgModel').value = cfg.llm_model || '';
-        document.getElementById('cfgApiKey').value = cfg.has_api_key ? '••••••••••••••••' : '';
-        document.getElementById('settingsModal').classList.add('show');
-      } catch (err) {
-        alert('Could not fetch settings');
-      }
-    }
-
-    function closeSettingsModal() {
-      document.getElementById('settingsModal').classList.remove('show');
-    }
-
-    async function saveSettings() {
-      const dbUrl = document.getElementById('cfgDbUrl').value.trim();
-      const provider = document.getElementById('cfgProvider').value.trim();
-      const model = document.getElementById('cfgModel').value.trim();
-      const apiKey = document.getElementById('cfgApiKey').value.trim();
-
-      const payload = { database_url: dbUrl, llm_provider: provider, llm_model: model };
-      if (apiKey && !apiKey.startsWith('••••')) {
-        payload.llm_api_key = apiKey;
-      }
-
-      try {
-        const res = await fetch('/api/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          alert('Settings updated successfully!');
-          closeSettingsModal();
-          location.reload();
-        } else {
-          const err = await res.json();
-          alert('Failed: ' + (err.detail || 'Could not update settings'));
-        }
-      } catch (err) {
-        alert('Error saving settings: ' + err);
-      }
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-  </script>
+addEventListener('keydown',e=>{const m=$('modal');if(!m.classList.contains('show'))return;
+  if(e.key==='Escape')closeSettings();
+  if(e.key==='Tab'){const f=[...m.querySelectorAll('button,input')];const a=f[0],z=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}});
+$('modal').addEventListener('mousedown',e=>{if(e.target===$('modal'))closeSettings()});
+</script>
 </body>
 </html>

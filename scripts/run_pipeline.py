@@ -44,17 +44,24 @@ def main():
 
     print("\n[3/6] Applying deterministic article filter...")
 
-    candidates = filter_articles(unique_articles)
+    residential_articles = filter_articles(unique_articles)
 
-    print(f"Residential candidates found: {len(candidates)}")
+    print(f"Residential articles found: {len(residential_articles)}")
 
-    if not candidates:
-        print("No residential candidates found. Pipeline complete.")
+    if not residential_articles:
+        print("No residential articles found. Pipeline complete.")
         return
 
     # -------------------------------------------------
-    # 4. Batch candidate processing loop with error isolation
+    # 4. Batch article processing loop with error isolation
     # -------------------------------------------------
+
+    # Pre-flight check: validate LLM configuration before executing agents
+    provider = (settings.llm_provider or "openai").lower().strip()
+    if provider != "ollama" and (not settings.llm_api_key or not settings.llm_api_key.strip()):
+        print("\n[ERROR] Pipeline stopped: Missing required LLM API key.")
+        print("Please specify LLM_API_KEY in your .env file.")
+        return
 
     metrics = {
         "processed": 0,
@@ -64,14 +71,14 @@ def main():
         "failed": 0,
     }
 
-    batch_candidates = candidates[:10]
-    batch_limit = len(batch_candidates)
+    batch_articles = residential_articles[:10]
+    batch_limit = len(batch_articles)
 
-    print(f"\n[4/6] Processing first {len(batch_candidates)} candidate articles after deduplication...")
+    print(f"\n[4/6] Processing first {len(batch_articles)} articles after deduplication with LangGraph agents...")
 
-    for index, article in enumerate(batch_candidates, start=1):
+    for index, article in enumerate(batch_articles, start=1):
         print(f"\n" + "-" * 50)
-        print(f"Processing Article [{index}/{len(batch_candidates)}]")
+        print(f"Processing Article [{index}/{len(batch_articles)}]")
         print("Title :", article.get("title"))
         print("URL   :", article.get("url"))
         print("-" * 50)
@@ -128,11 +135,20 @@ def main():
                 metrics["failed"] += 1
 
         except Exception as exc:
-            print(f"--> ERROR processing article: {exc}")
+            err_msg = str(exc)
+            print(f"--> ERROR processing article: {err_msg}")
             metrics["failed"] += 1
 
-        if index < len(batch_candidates):
+            if "Missing required LLM API key" in err_msg or "InvalidConfigurationError" in err_msg:
+                print("\n[ERROR] Fatal LLM configuration error. Halting pipeline execution.")
+                return
+
+        if index < len(batch_articles):
             time.sleep(2)
+
+    if metrics["failed"] == len(batch_articles) and len(batch_articles) > 0:
+        print("\n[ERROR] All articles failed processing. Halting pipeline.")
+        return
 
     # -------------------------------------------------
     # 5. Export Excel Business Output
