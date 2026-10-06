@@ -352,61 +352,67 @@ function renderLeads(){
 
 function toggleVisibility(inputId, btn){
   const el=$(inputId);
-  if(el.type==='password'){el.type='text';btn.textContent='🔒'}
-  else{el.type='password';btn.textContent='👁'}
+  if(!el)return;
+  if(el.type==='password'){el.type='text';if(btn)btn.textContent='🔒'}
+  else{el.type='password';if(btn)btn.textContent='👁'}
 }
 
 function onProviderPresetChange(){
+  if(!$('cProvPreset'))return;
   const prov=$('cProvPreset').value;
-  $('customProvWrap').style.display=prov==='custom'?'block':'none';
+  if($('customProvWrap'))$('customProvWrap').style.display=prov==='custom'?'block':'none';
   const cfg=PRESETS[prov]||PRESETS.custom;
   if(prov!=='custom'){
-    $('cProv').value=prov;
-    $('cModel').value=cfg.model;
-    $('cModelHint').textContent=cfg.hint;
-    $('cKey').placeholder=cfg.placeholder;
-    if(cfg.base)$('cBaseUrl').value=cfg.base;
+    if($('cProv'))$('cProv').value=prov;
+    if($('cModel'))$('cModel').value=cfg.model;
+    if($('cModelHint'))$('cModelHint').textContent=cfg.hint;
+    if($('cKey'))$('cKey').placeholder=cfg.placeholder;
+    if(cfg.base&&$('cBaseUrl'))$('cBaseUrl').value=cfg.base;
   }
 }
 
-async function openSettings(){try{const c=await api('/api/settings');lastFocus=document.activeElement;
+async function openSettings(){try{
+  const c=await api('/api/settings');lastFocus=document.activeElement;
   maskedDb=(c.database_url||'').replace(/(:\/\/[^:\/@]+:)[^@]*@/,'$1••••••@');
-  $('cDb').value=maskedDb;
+  if($('cDb'))$('cDb').value=maskedDb;
   
   const prov=(c.llm_provider||'gemini').toLowerCase();
-  $('cProv').value=prov;
-  if(['gemini','groq','openrouter','openai','anthropic','ollama'].includes(prov)){
-    $('cProvPreset').value=prov;
-    $('customProvWrap').style.display='none';
-  }else{
-    $('cProvPreset').value='custom';
-    $('customProvWrap').style.display='block';
+  if($('cProv'))$('cProv').value=prov;
+  if($('cProvPreset')){
+    if(['gemini','groq','openrouter','openai','anthropic','ollama'].includes(prov)){
+      $('cProvPreset').value=prov;
+      if($('customProvWrap'))$('customProvWrap').style.display='none';
+    }else{
+      $('cProvPreset').value='custom';
+      if($('customProvWrap'))$('customProvWrap').style.display='block';
+    }
   }
 
-  $('cModel').value=c.llm_model||'';
-  $('cKey').value=c.has_api_key?'••••••••••••':'';
-  $('cBaseUrl').value=c.llm_base_url||'';
-  $('cSearchProv').value=c.search_provider||'tavily';
-  $('cTavilyKey').value=c.has_tavily_key?'••••••••••••':'';
+  if($('cModel'))$('cModel').value=c.llm_model||'';
+  if($('cKey'))$('cKey').value=c.has_api_key?'••••••••••••':'';
+  if($('cBaseUrl'))$('cBaseUrl').value=c.llm_base_url||'';
+  if($('cSearchProv'))$('cSearchProv').value=c.search_provider||'tavily';
+  if($('cTavilyKey'))$('cTavilyKey').value=c.has_tavily_key?'••••••••••••':'';
 
   const cfg=PRESETS[prov]||PRESETS.custom;
-  $('cModelHint').textContent=cfg.hint||'';
+  if($('cModelHint'))$('cModelHint').textContent=cfg.hint||'';
 
-  $('modal').classList.add('show');
+  const modal=$('modal');
+  if(modal)modal.classList.add('show');
 }catch(e){toast('Could not load settings: '+e.message,'err')}}
 
-function closeSettings(){$('modal').classList.remove('show');if(lastFocus)lastFocus.focus()}
+function closeSettings(){const modal=$('modal');if(modal)modal.classList.remove('show');if(lastFocus)lastFocus.focus()}
 
 async function saveSettings(){
-  const provPreset=$('cProvPreset').value;
-  const prov=provPreset==='custom'?$('cProv').value.trim():provPreset;
+  const provPreset=$('cProvPreset')?$('cProvPreset').value:'gemini';
+  const prov=provPreset==='custom'&&$('cProv')?$('cProv').value.trim():provPreset;
   const p={
     llm_provider:prov,
-    llm_model:$('cModel').value.trim(),
-    llm_base_url:$('cBaseUrl').value.trim(),
-    search_provider:$('cSearchProv').value
+    llm_model:$('cModel')?$('cModel').value.trim():'',
+    llm_base_url:$('cBaseUrl')?$('cBaseUrl').value.trim():'',
+    search_provider:$('cSearchProv')?$('cSearchProv').value:'tavily'
   };
-  const db=$('cDb').value.trim(),key=$('cKey').value.trim(),tavKey=$('cTavilyKey').value.trim();
+  const db=$('cDb')?$('cDb').value.trim():'',key=$('cKey')?$('cKey').value.trim():'',tavKey=$('cTavilyKey')?$('cTavilyKey').value.trim():'';
   if(db&&db!==maskedDb)p.database_url=db;
   if(key&&!key.startsWith('••'))p.llm_api_key=key;
   if(tavKey&&!tavKey.startsWith('••'))p.tavily_api_key=tavKey;
