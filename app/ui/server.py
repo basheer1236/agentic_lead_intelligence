@@ -14,7 +14,27 @@ from app.ui.pipeline_runner import runner
 from app.storage.database import SessionLocal, reset_db_engine
 from app.export.excel_exporter import ExcelExporter
 
-app = FastAPI(title="Agentic Lead Intelligence Console")
+from contextlib import asynccontextmanager
+
+
+def _init_db_in_background():
+    try:
+        from app.storage.database import engine
+        from app.storage.base import Base
+        import app.storage.models
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Instant non-blocking server startup
+    asyncio.create_task(asyncio.to_thread(_init_db_in_background))
+    yield
+
+
+app = FastAPI(title="Agentic Lead Intelligence Console", lifespan=lifespan)
 
 TEMPLATE_PATH = Path(__file__).parent / "templates" / "index.html"
 EXPORTS_DIR = Path("data/exports")
@@ -34,18 +54,6 @@ class SettingsUpdateRequest(BaseModel):
     llm_provider: Optional[str] = None
     llm_model: Optional[str] = None
     llm_api_key: Optional[str] = None
-
-
-
-@app.on_event("startup")
-async def on_startup():
-    try:
-        from app.storage.database import engine
-        from app.storage.base import Base
-        import app.storage.models
-        Base.metadata.create_all(bind=engine)
-    except Exception as exc:
-        print(f"[WARN] Database initialization notice: {exc}")
 
 
 @app.get("/health")
