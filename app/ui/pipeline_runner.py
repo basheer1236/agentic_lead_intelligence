@@ -183,6 +183,16 @@ class PipelineRunner:
             # Verify database schema/tables before processing
             init_db()
 
+            # Pre-flight check: validate LLM configuration before starting pipeline
+            provider = (settings.llm_provider or "openai").lower().strip()
+            if provider != "ollama" and (not settings.llm_api_key or not settings.llm_api_key.strip()):
+                self.add_log(
+                    "ERROR",
+                    f"Pipeline halted: Missing API key for provider '{settings.llm_provider}'. Please configure your key in Settings (⚙️) or .env."
+                )
+                self._finish(STATUS_FAILED)
+                return
+
             # -----------------------------------------------------------------
             # Stage 1: Fetch RSS
             # -----------------------------------------------------------------
