@@ -414,8 +414,8 @@ async function saveSettings(){
   };
   const db=$('cDb')?$('cDb').value.trim():'',key=$('cKey')?$('cKey').value.trim():'',tavKey=$('cTavilyKey')?$('cTavilyKey').value.trim():'';
   if(db&&db!==maskedDb)p.database_url=db;
-  if(key&&!key.startsWith('••'))p.llm_api_key=key;
-  if(tavKey&&!tavKey.startsWith('••'))p.tavily_api_key=tavKey;
+  if(!key.startsWith('••'))p.llm_api_key=key;
+  if(!tavKey.startsWith('••'))p.tavily_api_key=tavKey;
 
   try{
     await api('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});

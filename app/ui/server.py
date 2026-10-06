@@ -239,10 +239,11 @@ async def update_settings(req: SettingsUpdateRequest):
         settings.llm_model = req.llm_model
         os.environ["LLM_MODEL"] = req.llm_model
 
-    if req.llm_api_key is not None and req.llm_api_key.strip():
-        update_key("LLM_API_KEY", req.llm_api_key.strip())
-        settings.llm_api_key = req.llm_api_key.strip()
-        os.environ["LLM_API_KEY"] = req.llm_api_key.strip()
+    if req.llm_api_key is not None:
+        key_val = req.llm_api_key.strip()
+        update_key("LLM_API_KEY", key_val)
+        settings.llm_api_key = key_val
+        os.environ["LLM_API_KEY"] = key_val
 
     if req.llm_base_url is not None:
         update_key("LLM_BASE_URL", req.llm_base_url.strip())
@@ -254,10 +255,11 @@ async def update_settings(req: SettingsUpdateRequest):
         settings.search_provider = req.search_provider.strip()
         os.environ["SEARCH_PROVIDER"] = req.search_provider.strip()
 
-    if req.tavily_api_key is not None and req.tavily_api_key.strip():
-        update_key("TAVILY_API_KEY", req.tavily_api_key.strip())
-        settings.tavily_api_key = req.tavily_api_key.strip()
-        os.environ["TAVILY_API_KEY"] = req.tavily_api_key.strip()
+    if req.tavily_api_key is not None:
+        tav_val = req.tavily_api_key.strip()
+        update_key("TAVILY_API_KEY", tav_val)
+        settings.tavily_api_key = tav_val
+        os.environ["TAVILY_API_KEY"] = tav_val
 
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return {"success": True, "message": "Settings updated and saved to .env"}
