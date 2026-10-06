@@ -19,6 +19,20 @@ def main():
     print("=" * 60)
 
     # -------------------------------------------------
+    # 0. Pre-Flight Configuration Verification
+    # -------------------------------------------------
+    if not settings.database_url or not settings.database_url.strip():
+        print("\n[ERROR] Pipeline halted: Missing DATABASE_URL.")
+        print("Please configure DATABASE_URL in your .env file.")
+        return
+
+    provider = (settings.llm_provider or "gemini").lower().strip()
+    if provider != "ollama" and (not settings.llm_api_key or not settings.llm_api_key.strip()):
+        print(f"\n[ERROR] Pipeline halted: Missing API key for provider '{settings.llm_provider}'.")
+        print("Please specify LLM_API_KEY in your .env file or Settings.")
+        return
+
+    # -------------------------------------------------
     # 1. Fetch RSS
     # -------------------------------------------------
 

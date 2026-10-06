@@ -176,22 +176,51 @@ class PipelineRunner:
             settings.tavily_api_key = fresh.tavily_api_key
             settings.request_timeout_seconds = fresh.request_timeout_seconds
 
-            # Rebind database engine to current settings.database_url
-            from app.storage.database import reset_db_engine
-            reset_db_engine(settings.database_url)
-
-            # Verify database schema/tables before processing
-            init_db()
-
-            # Pre-flight check: validate LLM configuration before starting pipeline
-            provider = (settings.llm_provider or "openai").lower().strip()
-            if provider != "ollama" and (not settings.llm_api_key or not settings.llm_api_key.strip()):
+            # -----------------------------------------------------------------
+            # Stage 0: Pre-Flight Configuration & Database Verification
+            # -----------------------------------------------------------------
+            # 1. Validate Database Configuration
+            if not settings.database_url or not settings.database_url.strip():
                 self.add_log(
                     "ERROR",
-                    f"Pipeline halted: Missing API key for provider '{settings.llm_provider}'. Please configure your key in Settings (⚙️) or .env."
+                    "Pre-flight check failed: DATABASE_URL is missing. Please configure your database connection in Settings (⚙️) or .env."
                 )
                 self._finish(STATUS_FAILED)
                 return
+
+            try:
+                # Rebind database engine to current settings.database_url
+                from app.storage.database import reset_db_engine
+                reset_db_engine(settings.database_url)
+                init_db()
+            except Exception as db_err:
+                self.add_log(
+                    "ERROR",
+                    f"Pre-flight check failed: Could not connect to database. Details: {db_err}"
+                )
+                self._finish(STATUS_FAILED)
+                return
+
+            # 2. Validate LLM API Key (unless using local Ollama)
+            provider = (settings.llm_provider or "gemini").lower().strip()
+            if provider != "ollama" and (not settings.llm_api_key or not settings.llm_api_key.strip()):
+                self.add_log(
+                    "ERROR",
+                    f"Pre-flight check failed: Missing LLM API key for provider '{settings.llm_provider}'. Please enter your API key in Settings (⚙️) or .env."
+                )
+                self._finish(STATUS_FAILED)
+                return
+
+            # 3. Informational Check for Web Search / Tavily
+            if (settings.search_provider or "").lower() == "tavily":
+                if not settings.tavily_api_key or not settings.tavily_api_key.strip():
+                    self.add_log("INFO", "Tavily API key not supplied; defaulting to Mock search for designer verification (zero cost).")
+                else:
+                    self.add_log("INFO", "Tavily live search enabled for designer verification.")
+
+            # 4. Custom Base URL (Optional)
+            if settings.llm_base_url and settings.llm_base_url.strip():
+                self.add_log("INFO", f"Using custom LLM Base URL: {settings.llm_base_url.strip()}")
 
             # -----------------------------------------------------------------
             # Stage 1: Fetch RSS
