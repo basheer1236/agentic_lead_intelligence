@@ -147,14 +147,18 @@ class PipelineRunner:
 
     def cancel(self):
         """
-        Gracefully request cancellation (abort) of the running pipeline.
+        Immediately cancel and halt the running pipeline, allowing instant restart.
         """
         with self._lock:
             if self.state["status"] != STATUS_RUNNING:
-                return False, "Pipeline is not running."
+                return False, "Pipeline is not currently running."
             self._cancel_requested = True
-        self.add_log("WARN", "Abort signal received from user. Halting pipeline execution...")
-        return True, "Abort signal registered."
+            self.state["status"] = STATUS_ABORTED
+            if self.state["start_time"]:
+                self.state["elapsed_seconds"] = int(time.time() - self.state["start_time"])
+        self.add_log("WARN", "Pipeline run stopped by operator.")
+        self._broadcast("status", self.get_snapshot())
+        return True, "Pipeline execution stopped."
 
     def _run_worker(self, batch_size: int, single_test_mode: bool):
         try:
@@ -351,9 +355,7 @@ class PipelineRunner:
             self._finish(STATUS_FAILED)
 
     def _check_cancel(self) -> bool:
-        if self._cancel_requested:
-            self.add_log("WARN", "Pipeline run aborted by operator.")
-            self._finish(STATUS_ABORTED)
+        if self._cancel_requested or self.state.get("status") == STATUS_ABORTED:
             return True
         return False
 
