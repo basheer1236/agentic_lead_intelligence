@@ -45,13 +45,13 @@ def init_environment():
     app_env = get_setting("APP_ENV", "Environment mode (production/development)", "production")
     db_url = get_setting(
         "DATABASE_URL",
-        "PostgreSQL connection string",
-        "postgresql://postgres:postgres@localhost:5432/lead_intelligence"
+        "PostgreSQL / Neon connection string",
+        "postgresql://neondb_owner:npg_eQtZ6B7FmknT@ep-lucky-sound-b4drbw0w-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require"
     )
-    llm_provider = get_setting("LLM_PROVIDER", "LLM Provider (openai/gemini/groq)", "openai")
-    llm_api_key = get_setting("LLM_API_KEY", "LLM API Key (e.g., sk-...)", "")
-    llm_model = get_setting("LLM_MODEL", "LLM Model Name", "gpt-4o-mini")
-    tavily_key = get_setting("TAVILY_API_KEY", "Tavily Search API Key (e.g., tvly-...)", "")
+    llm_provider = get_setting("LLM_PROVIDER", "LLM Provider (gemini/openrouter/groq/openai)", "gemini")
+    llm_api_key = get_setting("LLM_API_KEY", "LLM API Key", "")
+    llm_model = get_setting("LLM_MODEL", "LLM Model Name", "gemini-flash-latest")
+    tavily_key = get_setting("TAVILY_API_KEY", "Tavily Search API Key (optional)", "")
 
     # Save to .env
     env_content = f"""# Auto-generated .env configuration
@@ -61,7 +61,7 @@ DATABASE_URL={db_url}
 
 LLM_PROVIDER={llm_provider}
 LLM_API_KEY={llm_api_key}
-LLM_BASE_URL=https://api.openai.com/v1
+LLM_BASE_URL=
 LLM_MODEL={llm_model}
 
 SEARCH_PROVIDER=tavily
