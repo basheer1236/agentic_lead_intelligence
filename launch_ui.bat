@@ -1,21 +1,21 @@
 @echo off
-SETLOCAL EnableDelayedExpansion
+setlocal
 
 echo ============================================================
 echo   AGENTIC LEAD INTELLIGENCE - EXECUTIVE DASHBOARD
 echo ============================================================
 
-IF EXIST ".venv\Scripts\activate.bat" (
-    call .venv\Scripts\activate.bat
-) ELSE IF EXIST "venv\Scripts\activate.bat" (
-    call venv\Scripts\activate.bat
-) ELSE (
-    echo [ERROR] Python virtual environment not found (.venv or venv).
+set "PY_EXE="
+if exist ".venv\Scripts\python.exe" set "PY_EXE=.venv\Scripts\python.exe"
+if not defined PY_EXE if exist "venv\Scripts\python.exe" set "PY_EXE=venv\Scripts\python.exe"
+
+if not defined PY_EXE (
+    echo [ERROR] Python virtual environment not found. Please run setup.bat first.
     pause
     exit /b 1
 )
 
-set PYTHONPATH=.
+set "PYTHONPATH=."
 
 echo.
 echo [+] Launching dashboard server on http://localhost:8000...
@@ -24,6 +24,6 @@ echo.
 
 start "" "http://localhost:8000"
 
-python -m app.ui.server
+"%PY_EXE%" -m app.ui.server
 
 pause
