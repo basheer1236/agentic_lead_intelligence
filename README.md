@@ -104,7 +104,7 @@ You can easily host this application on any cloud platform in under 3 minutes:
 2. Set the service type to **Web Service** with **Python 3.11+**.
 3. **Build Command**:
    ```bash
-   pip install -r requirements.txt && playwright install --with-deps chromium
+   pip install -r requirements.txt && playwright install chromium
    ```
 4. **Start Command**:
    ```bash
