@@ -1,180 +1,137 @@
-# Agentic Lead Intelligence - Portable Deployment & Quick Start Guide
+# 🏢 Agentic Lead Intelligence Platform
 
-An enterprise-grade, autonomous multi-agent intelligence pipeline designed to extract, enrich, score, and synthesize high-intent residential interior design and architecture leads into relationally linked Excel workbooks and Cloud PostgreSQL (Neon).
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://agentic-lead-intelligence-mgys.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon.tech-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-FF6F00?style=for-the-badge)](https://langchain-ai.github.io/langgraph/)
 
----
-
-##  Key Highlights & Architecture
-
-* **Multi-Agent Pipeline**: Powered by LangGraph agents (Relevance Classifier, Project Metadata Extractor, Interior Designer Profiler, Public Search Verifier, Rug Opportunity Evaluator).
-* **Universal LLM Client**: Built-in support for any LLM provider (Google Gemini, OpenRouter, OpenAI, Groq, Anthropic, DeepSeek, Ollama) via unified OpenAI-compatible endpoints with automated token trimming and exponential backoff retry.
-* **Executive Web Dashboard**: Real-time FastAPI server with Server-Sent Events (SSE) streaming live terminal logs, manual execution trigger, batch size selector, test mode toggle, stop/abort control, database health monitor, and instant Excel export download.
-* **Resilient Cloud Database**: Neon Serverless PostgreSQL integration with persistent connection pooling (`pool_pre_ping=True`, `pool_recycle=300`) and graceful SQLite offline fallback.
-* **Relationally Linked Excel Workbooks**: Auto-generates multi-sheet Excel workbooks (`README`, `Lead Intelligence Master`, `Interior Designer Master`, `Rug Opportunity Tracker`) formatted according to commercial executive specifications.
+An autonomous multi-agent intelligence pipeline designed to extract, enrich, score, and synthesize high-intent residential interior design and architecture leads from Architectural Digest India into relationally linked Excel workbooks and Cloud PostgreSQL (Neon).
 
 ---
 
-## Prerequisites
+## 🌐 Live Web Demo
 
-1. **Python 3.11+**: Installed and available in PATH ([python.org](https://www.python.org/)).
-2. **PostgreSQL Database** *(Recommended)*: A free serverless database on [Neon.tech](https://neon.tech/) or local PostgreSQL instance. *(Pipeline falls back to local SQLite if not configured)*.
-3. **LLM API Key**: Google Gemini (Recommended / Free tier), OpenRouter, Groq, or OpenAI API key.
-4. **Tavily AI Search Key** *(Optional)*: For verifying public designer portfolio websites and social URLs.
+Access the hosted executive dashboard directly in your browser:
+👉 **[https://agentic-lead-intelligence-mgys.onrender.com](https://agentic-lead-intelligence-mgys.onrender.com)**
 
 ---
 
-##  Quick Start
+## 🚀 Local Quickstart (Run on Any Laptop)
 
-### Option A: Windows (1-Click Launchers)
-
-1. **Initial Setup**:
-   Double-click `setup.bat` (or run in PowerShell/CMD):
-   ```cmd
-   setup.bat
-   ```
-   *This automatically creates/activates the virtual environment (`.venv`), installs all dependencies, downloads Playwright browser binaries, guides you through `.env` creation, and executes Alembic database migrations.*
-
-2. **Launch the Executive Web Dashboard** *(Recommended)*:
-   Double-click `launch_ui.bat`:
-   ```cmd
-   launch_ui.bat
-   ```
-   *Automatically starts the FastAPI server and opens `http://localhost:8000` in your default browser.*
-
-3. **Or Run CLI Pipeline Directly**:
-   Double-click `run.bat`:
-   ```cmd
-   run.bat
-   ```
-   *Runs the pipeline in batch mode, records results to Neon PostgreSQL, and opens the `data/exports` directory containing the Excel sheets.*
-
----
-
-### Option B: macOS / Linux
-
-1. **Initial Setup**:
-   ```bash
-   chmod +x setup.sh run.sh
-   ./setup.sh
-   ```
-
-2. **Launch the Executive Web Dashboard**:
-   ```bash
-   source .venv/bin/activate
-   uvicorn app.ui.server:app --host 127.0.0.1 --port 8000 --reload
-   ```
-   Open `http://127.0.0.1:8000` in your web browser.
-
-3. **Or Run CLI Pipeline Directly**:
-   ```bash
-   ./run.sh
-   ```
-
----
-
-### Option C: VS Code (IDE Experience)
-
-The workspace includes pre-configured launch tasks (`.vscode/launch.json`):
-1. Open the repository in VS Code: `code .`
-2. Select Python Interpreter: Press `Ctrl+Shift+P` -> **Python: Select Interpreter** -> choose `./.venv/Scripts/python.exe`.
-3. Open the **Run & Debug** panel (`Ctrl+Shift+D`):
-   - Choose **"Executive Web UI (FastAPI)"** and press `F5` to start the dashboard.
-   - Choose **"Run Pipeline CLI"** to debug article processing step-by-step.
-   - Choose **"Run Pytest Suite"** to verify the test suite.
-
----
-
-##  Configuration (`.env`)
-
-Copy `.env.example` to `.env` if not already created:
-```cmd
-copy .env.example .env
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/basheer1236/agentic_lead_intelligence.git
+cd agentic_lead_intelligence
 ```
 
-### 1. Database Configuration (Neon PostgreSQL)
-```env
-# Neon Serverless PostgreSQL (Recommended):
-DATABASE_URL=postgresql://<user>:<password>@ep-lucky-sound-b4drbw0w-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require
+### Step 2: One-Click Environment Setup
 
-# Local PostgreSQL Alternative:
-# DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lead_intelligence
+#### **Windows**:
+Double-click `setup.bat` or run in PowerShell / Command Prompt:
+```powershell
+.\setup.bat
 ```
+*(Creates `.venv`, installs all packages, installs Playwright browsers, and prepares `.env`)*
 
-### 2. Universal LLM Configuration
-
-The pipeline supports any LLM provider by simply switching the provider name and model:
-
-#### Google Gemini (Free / Fast - Default):
-```env
-LLM_PROVIDER=gemini
-LLM_API_KEY=AIzaSy...
-LLM_MODEL=gemini-flash-latest
-# Optional: LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
-```
-
-#### OpenRouter:
-```env
-LLM_PROVIDER=openrouter
-LLM_API_KEY=sk-or-v1-...
-LLM_MODEL=openai/gpt-4o-mini
-```
-
-#### Groq:
-```env
-LLM_PROVIDER=groq
-LLM_API_KEY=gsk_...
-LLM_MODEL=llama-3.3-70b-versatile
-```
-
-#### OpenAI:
-```env
-LLM_PROVIDER=openai
-LLM_API_KEY=sk-...
-LLM_MODEL=gpt-4o-mini
-```
-
-#### Ollama (Local LLM):
-```env
-LLM_PROVIDER=ollama
-LLM_API_KEY=ollama
-LLM_MODEL=llama3:latest
-LLM_BASE_URL=http://localhost:11434/v1
-```
-
-### 3. Public Web Search (Tavily AI)
-```env
-SEARCH_PROVIDER=tavily
-TAVILY_API_KEY=tvly-...
-# If left blank, the pipeline uses the built-in MockSearchProvider for graceful local execution.
+#### **macOS / Linux**:
+```bash
+chmod +x setup.sh launch_ui.sh run.sh
+./setup.sh
 ```
 
 ---
 
-## Output Artifacts & Deliverables
+### Step 3: Launch the Executive Dashboard
 
-Every successful pipeline run generates structured relational deliverables:
+#### **Windows**:
+Double-click `launch_ui.bat` or run:
+```powershell
+.\launch_ui.bat
+```
+
+#### **macOS / Linux**:
+```bash
+./launch_ui.sh
+```
+
+#### **VS Code Terminal**:
+```powershell
+.\.venv\Scripts\python.exe -m app.ui.server
+```
+
+Open your browser at:
+👉 **`http://localhost:8000`**
+
+---
+
+### Step 4: Configure Settings & Start
+
+1. Click **Settings (⚙️)** in the top right corner of the dashboard.
+2. Select your AI provider (**Google Gemini**, **Groq**, **OpenRouter**, **OpenAI**, **Anthropic**, or local **Ollama**).
+3. Paste your **AI Access Key** (and optional **Tavily Key**).
+4. Click **Save all settings**.
+5. Select the number of articles to check (e.g. 5) and click **Start search**.
+
+---
+
+## 🔑 Universal LLM & Configuration
+
+You can configure your settings via the **Settings (⚙️)** modal in the dashboard or directly in `.env`:
+
+| Provider | Recommended Model | API Key Format |
+| :--- | :--- | :--- |
+| **Google Gemini** *(Free & Fast)* | `gemini-flash-latest` or `gemini-2.0-flash` | `AIzaSy...` |
+| **Groq** *(Ultra Fast)* | `llama-3.3-70b-versatile` | `gsk_...` |
+| **OpenRouter** *(Universal)* | `openai/gpt-4o-mini` or `deepseek/deepseek-chat` | `sk-or-v1-...` |
+| **OpenAI** | `gpt-4o-mini` | `sk-proj-...` |
+| **Anthropic** | `claude-3-5-sonnet-20241022` | `sk-ant-...` |
+| **Ollama (Local Offline)** | `llama3:latest` | `ollama` *(Zero cost)* |
+
+### Web Search (Tavily AI)
+* **Live Search**: Provide your `TAVILY_API_KEY` (`tvly-...`) for real-time portfolio verification.
+* **Mock Search**: If left blank, the pipeline automatically falls back to offline Mock Search without crashing or requiring any key.
+
+### Database (Neon PostgreSQL)
+* Connects seamlessly to serverless PostgreSQL (e.g. Neon.tech).
+* Automatically falls back to local SQLite if no external database is configured.
+
+---
+
+## 🛡️ Pre-Flight Verification & Governance
+
+* **Stage 0 Pre-Flight Checks**: Validates database connectivity and LLM credentials before initiating network operations. If an LLM API key is missing, execution halts immediately at **0%** with a clear explanation in the activity log.
+* **Instant Abort & Restart**: The operator can stop execution at any time; the pipeline transitions to `Stopped` instantly and re-enables the search trigger.
+* **Deterministic RSS & Dedup**: Stages 1–3 filter articles deterministically without consuming LLM tokens.
+* **LangGraph Multi-Agent Analysis**: Stage 4 routes residential articles through specialized agents for designer attribution, contact extraction, and bespoke rug opportunity scoring.
+
+---
+
+## 📊 Deliverables & Output Files
+
+Every pipeline execution generates commercial-grade deliverables:
 
 1. **Relational Excel Workbooks (`data/exports/`)**:
-   - `lead_intelligence_master.xlsx`: Full relational master workbook containing 4 synchronized tabs:
-     * **`README`**: Executive summary, column definitions, scoring methodologies, and schema relationships.
-     * **`Lead Intelligence Master`**: Project records, article source metadata, locations, estimated budgets, and carpet areas.
-     * **`Interior Designer Master`**: Lead scoring (0–100), high-value flag, verified studio names, websites, Instagram URLs, city/country, and verified phone/email contact details.
-     * **`Rug Opportunity Tracker`**: Sizing recommendations, bespoke luxury suitability scores, material/pattern requirements, and buyer intent assessment.
-   - `lead_intelligence.xlsx`: Timestamped standard run export.
-
+   - `lead_intelligence_master.xlsx`: Full relational master workbook containing 4 synchronized sheets:
+     - **`README`**: Methodology, score weighting (0–100), and schema documentation.
+     - **`Lead Intelligence Master`**: Project metadata, article URLs, carpet areas, and locations.
+     - **`Interior Designer Master`**: Designer names, studios, verified website/social links, phone/email, and qualification scores.
+     - **`Rug Opportunity Tracker`**: Room dimensions, placement recommendations, custom sizing, and material requirements.
 2. **Neon Cloud Database**:
-   - Persisted across normalized tables (`projects`, `designers`, `rug_opportunities`, `pipeline_runs`) queryable via SQL or BI tools.
+   - Persisted across relational tables (`projects`, `designers`, `rug_opportunities`, `pipeline_runs`) queryable via SQL and BI tools.
+3. **One-Click Download**:
+   - Direct download links in the dashboard for instant access to exported `.xlsx` files.
 
 ---
 
-## Testing & Verification
+## 🧪 Testing
 
-Run the comprehensive pytest suite:
-```cmd
+Run the full automated test suite:
+```bash
 pytest -v
 ```
 Verifies:
-* Universal LLM client provider routing and mock fallback.
-* Neon PostgreSQL connection pooling, reconnect resilience, and schema binding.
-* FastAPI Web UI health check, streaming endpoints, and runner state machine.
-* Multi-sheet Excel workbook export integrity and column headers.
+* Universal LLM client routing, token safety, and error handling.
+* Neon PostgreSQL connection pooling and reconnect resilience.
+* FastAPI Web UI streaming SSE endpoints, health status, and state machine.
+* Multi-sheet Excel export integrity.
