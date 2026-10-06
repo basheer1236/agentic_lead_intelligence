@@ -54,6 +54,9 @@ class SettingsUpdateRequest(BaseModel):
     llm_provider: Optional[str] = None
     llm_model: Optional[str] = None
     llm_api_key: Optional[str] = None
+    llm_base_url: Optional[str] = None
+    search_provider: Optional[str] = None
+    tavily_api_key: Optional[str] = None
 
 
 @app.get("/health")
@@ -193,7 +196,10 @@ async def get_settings():
         "database_url": settings.database_url,
         "llm_provider": settings.llm_provider,
         "llm_model": settings.llm_model,
+        "llm_base_url": settings.llm_base_url or "",
         "has_api_key": bool(settings.llm_api_key),
+        "search_provider": settings.search_provider or "tavily",
+        "has_tavily_key": bool(settings.tavily_api_key),
     }
 
 
@@ -233,6 +239,18 @@ async def update_settings(req: SettingsUpdateRequest):
     if req.llm_api_key is not None and req.llm_api_key.strip():
         update_key("LLM_API_KEY", req.llm_api_key.strip())
         settings.llm_api_key = req.llm_api_key.strip()
+
+    if req.llm_base_url is not None:
+        update_key("LLM_BASE_URL", req.llm_base_url.strip())
+        settings.llm_base_url = req.llm_base_url.strip()
+
+    if req.search_provider is not None:
+        update_key("SEARCH_PROVIDER", req.search_provider.strip())
+        settings.search_provider = req.search_provider.strip()
+
+    if req.tavily_api_key is not None and req.tavily_api_key.strip():
+        update_key("TAVILY_API_KEY", req.tavily_api_key.strip())
+        settings.tavily_api_key = req.tavily_api_key.strip()
 
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return {"success": True, "message": "Settings updated and saved to .env"}
