@@ -1,12 +1,22 @@
 # 🏢 Agentic Lead Intelligence Platform
 
-An enterprise-grade, autonomous multi-agent lead intelligence pipeline that automatically discovers, extracts, enriches, scores, and synthesizes high-intent residential interior design and architecture leads into relationally linked Excel workbooks and Cloud PostgreSQL.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://agentic-lead-intelligence-mgys.onrender.com)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PostgreSQL](https://img.shields.io/badge/Database-Neon%20PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech/)
+[![FastAPI](https://img.shields.io/badge/UI-FastAPI%20%2B%20SSE-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+
+An enterprise-grade, autonomous multi-agent intelligence pipeline that extracts, enriches, scores, and synthesizes high-intent residential interior design and architecture leads into relationally linked Excel workbooks and Cloud PostgreSQL.
 
 ---
 
-## ⚡ Quick Start: How to Run in 3 Minutes
+## 🌐 Live Cloud Demo
 
-Follow these 4 simple steps to run the complete system on any computer (Windows, macOS, or Linux).
+You can try the live application right now without installing anything:  
+👉 **[https://agentic-lead-intelligence-mgys.onrender.com](https://agentic-lead-intelligence-mgys.onrender.com)**
+
+---
+
+## ⚡ Quick Start: Running Locally on Any Laptop
 
 ```
 ┌────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐
@@ -19,7 +29,7 @@ Follow these 4 simple steps to run the complete system on any computer (Windows,
 
 ### Step 1: Clone the Repository
 
-Open your terminal (PowerShell, Command Prompt, or Terminal) and run:
+Open your terminal (PowerShell, CMD, or Terminal) and run:
 
 ```bash
 git clone https://github.com/basheer1236/agentic_lead_intelligence.git
@@ -28,12 +38,12 @@ cd agentic_lead_intelligence
 
 ---
 
-### Step 2: Run the One-Click Setup
+### Step 2: One-Click Setup
 
-This automatically creates your Python virtual environment (`.venv`), installs all required libraries, and downloads headless browser binaries.
+This automatically creates your Python virtual environment (`.venv`), installs all required libraries, and downloads the headless browser:
 
 * **On Windows (Easiest)**:
-  Double-click `setup.bat` or run:
+  Double-click `setup.bat` (or run in terminal):
   ```cmd
   setup.bat
   ```
@@ -54,7 +64,7 @@ Create a `.env` file in the project root folder (you can copy `.env.example`):
 # 1. Database Connection (Neon Cloud PostgreSQL)
 DATABASE_URL=postgresql://<user>:<password>@<neon-endpoint>.neon.tech/neondb?sslmode=require
 
-# 2. LLM Provider (Google Gemini is free and fast)
+# 2. Universal LLM Provider (Google Gemini is fast & free)
 LLM_PROVIDER=gemini
 LLM_API_KEY=your_gemini_api_key_here
 LLM_MODEL=gemini-flash-latest
@@ -95,13 +105,13 @@ TAVILY_API_KEY=
 
 ---
 
-## 🌐 Cloud Hosting Guide (Zero Docker / Native Python)
+## ☁️ Cloud Hosting Guide (Render, Railway, VPS)
 
-You can easily host this application on any cloud platform in under 3 minutes:
+Deploying to cloud platforms takes under 3 minutes with zero Docker required:
 
-### Deploying to Render / Railway / Heroku
+### Deploying to Render
 1. Connect your GitHub repository (`https://github.com/basheer1236/agentic_lead_intelligence`).
-2. Set the service type to **Web Service** with **Python 3.11+**.
+2. Set service type to **Web Service** with **Python 3**.
 3. **Build Command**:
    ```bash
    pip install -r requirements.txt && playwright install chromium
@@ -112,24 +122,22 @@ You can easily host this application on any cloud platform in under 3 minutes:
    ```
    *(A pre-configured `Procfile` is included)*.
 5. **Health Check URL**: `/health` (returns HTTP 200 OK).
-6. **Environment Variables**: Add `DATABASE_URL`, `LLM_PROVIDER`, `LLM_API_KEY`, and `LLM_MODEL` in your cloud settings.
+6. **Environment Variables**: Add `DATABASE_URL`, `LLM_PROVIDER`, `LLM_API_KEY`, and `LLM_MODEL`.
 
 ### Deploying to Ubuntu / Linux VPS (AWS EC2, DigitalOcean)
 ```bash
 git clone https://github.com/basheer1236/agentic_lead_intelligence.git
 cd agentic_lead_intelligence
 ./setup.sh
-# Configure your .env file
-nano .env
 # Start the background service using PM2 or systemd
-pm2 start "uvicorn app.ui.server:app --host 0.0.0.0 --port 8000" --name "lead-intel"
+pm2 start "./launch_ui.sh" --name "lead-intel"
 ```
 
 ---
 
 ## 🔄 Universal LLM Configuration
 
-You are not locked into any single AI provider. Simply switch the provider and model in `.env` (or on the fly from the Web Dashboard at `http://localhost:8000`):
+You can switch between any LLM provider at any time by updating `.env` (or on the fly from the Web Dashboard at `http://localhost:8000`):
 
 | Provider | `LLM_PROVIDER` | `LLM_MODEL` | Where to get Key |
 | :--- | :--- | :--- | :--- |
