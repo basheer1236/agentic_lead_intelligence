@@ -1,256 +1,193 @@
-# Agentic Lead Intelligence - Portable Deployment & Hosting Guide
+# 🏢 Agentic Lead Intelligence Platform
 
-An enterprise-grade, autonomous multi-agent lead intelligence pipeline designed to discover, enrich, score, and synthesize high-intent residential interior design and architecture leads into relationally linked Excel workbooks and Cloud PostgreSQL (Neon).
-
----
-
-## 🚀 System Architecture & Capabilities
-
-* **Autonomous Multi-Agent Pipeline**: LangGraph workflow coordinating specialized agents (Relevance Classifier, Project Metadata Extractor, Interior Designer Profiler, Public Web Search Verifier, Rug Opportunity Evaluator).
-* **Universal LLM Engine**: Native provider routing for **Google Gemini**, **OpenRouter**, **Groq**, **OpenAI**, **DeepSeek**, and local **Ollama** via unified OpenAI-compatible endpoints with automated prompt trimming, exponential backoff retries, and inter-article rate pacing.
-* **Executive Web Dashboard**: FastAPI server with Server-Sent Events (SSE) streaming live execution logs, interactive "Run Pipeline" trigger, batch size selector, test mode toggle, stop control, database health monitor, and one-click Excel download.
-* **Resilient Cloud Database**: Neon Serverless PostgreSQL integration with persistent connection pooling (`pool_pre_ping=True`, `pool_recycle=300`), automatic table initialization on startup, and graceful offline fallback.
-* **Executive Relational Excel Workbooks**: Generates 4 synchronized, relationally linked tabs (`README`, `Lead Intelligence Master`, `Interior Designer Master`, `Rug Opportunity Tracker`) formatted to institutional reporting standards.
+An enterprise-grade, autonomous multi-agent lead intelligence pipeline that automatically discovers, extracts, enriches, scores, and synthesizes high-intent residential interior design and architecture leads into relationally linked Excel workbooks and Cloud PostgreSQL.
 
 ---
 
-## 📋 System Requirements & Prerequisites
+## ⚡ Quick Start: How to Run in 3 Minutes
 
-1. **Python 3.11+**: Installed and accessible in PATH.
-2. **Cloud PostgreSQL** *(Recommended)*: A free serverless database on [Neon.tech](https://neon.tech/) (or local PostgreSQL).
-3. **LLM API Key**: Google Gemini (Recommended / Fast & Free tier), OpenRouter, Groq, or OpenAI.
-4. **Tavily Search API Key** *(Optional)*: For verifying public designer portfolio websites and social URLs.
+Follow these 4 simple steps to run the complete system on any computer (Windows, macOS, or Linux).
 
----
-
-## 🌐 Cloud Hosting & Server Deployment Guide (Python Native / Zero Docker)
-
-This application is built with standard Python and FastAPI, making it extremely lightweight and straightforward to host on any cloud platform or server without Docker.
-
-### Method 1: Cloud PaaS (Render, Railway, Fly.io, Heroku)
-
-Deploying to modern cloud platforms takes under 3 minutes:
-
-1. **Push Repository**: Connect your GitHub repository (`https://github.com/basheer7526/agentic-lead-intelligence`) to your platform.
-2. **Configure Service Settings**:
-   * **Environment**: `Python 3.11+`
-   * **Build Command**:
-     ```bash
-     pip install -r requirements.txt && playwright install --with-deps chromium
-     ```
-   * **Start Command**:
-     ```bash
-     uvicorn app.ui.server:app --host 0.0.0.0 --port $PORT
-     ```
-     *(A pre-configured `Procfile` is already included in the root directory)*.
-   * **Health Check Path**: `/health` (returns `200 OK`)
-3. **Set Environment Variables**:
-   Add the following in your platform's **Environment Variables / Config Vars** dashboard:
-   | Variable | Value | Description |
-   | :--- | :--- | :--- |
-   | `DATABASE_URL` | `postgresql://<user>:<pwd>@<endpoint>.neon.tech/neondb?sslmode=require` | Neon PostgreSQL cloud connection |
-   | `LLM_PROVIDER` | `gemini` | Provider name (`gemini`, `openrouter`, `groq`, `openai`) |
-   | `LLM_API_KEY` | `AIzaSy...` | Your LLM provider API key |
-   | `LLM_MODEL` | `gemini-flash-latest` | Model identifier |
-   | `TAVILY_API_KEY` | *(Optional)* | Tavily Search key (if left blank, uses mock search) |
-   | `SEARCH_PROVIDER` | `tavily` | Search engine provider |
-
-4. **Deploy**:
-   The host will build dependencies, run migrations/table initialization automatically on startup, and serve the dashboard on your assigned URL!
+```
+┌────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐
+│  1. Clone Repository   │ ──> │   2. 1-Click Setup     │ ──> │  3. Configure .env     │ ──> │    4. Launch App       │
+│  git clone <repo_url>  │     │   setup.bat / setup.sh │     │  Add your API key      │     │  launch_ui.bat / .sh   │
+└────────────────────────┘     └────────────────────────┘     └────────────────────────┘     └────────────────────────┘
+```
 
 ---
 
-### Method 2: Linux VPS / Ubuntu Server (AWS EC2, DigitalOcean, Linode)
+### Step 1: Clone the Repository
 
-To host on a standard Linux virtual server:
+Open your terminal (PowerShell, Command Prompt, or Terminal) and run:
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/basheer7526/agentic-lead-intelligence.git
-   cd agentic-lead-intelligence
-   ```
-
-2. **Run One-Click Setup**:
-   ```bash
-   chmod +x setup.sh run.sh launch_ui.sh
-   ./setup.sh
-   ```
-   *This automatically creates `.venv`, installs dependencies, downloads Playwright Chromium, prompts for keys, and initializes the database.*
-
-3. **Configure Environment File**:
-   Ensure `.env` exists with your keys:
-   ```bash
-   nano .env
-   ```
-
-4. **Run as a Background Production Service**:
-   You can run the web dashboard using **PM2**, **systemd**, or **tmux**:
-
-   *Using PM2:*
-   ```bash
-   npm install -g pm2
-   pm2 start "uvicorn app.ui.server:app --host 0.0.0.0 --port 8000" --name "lead-intel"
-   pm2 save
-   pm2 startup
-   ```
-
-   *Or Using systemd (`/etc/systemd/system/lead-intel.service`):*
-   ```ini
-   [Unit]
-   Description=Agentic Lead Intelligence Web Dashboard
-   After=network.target
-
-   [Service]
-   User=ubuntu
-   WorkingDirectory=/home/ubuntu/agentic-lead-intelligence
-   ExecStart=/home/ubuntu/agentic-lead-intelligence/.venv/bin/uvicorn app.ui.server:app --host 0.0.0.0 --port 8000
-   Restart=always
-   EnvironmentFile=/home/ubuntu/agentic-lead-intelligence/.env
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-   Enable and start the service:
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable lead-intel
-   sudo systemctl start lead-intel
-   ```
-
-5. Access the live dashboard at `http://<your-server-ip>:8000`.
+```bash
+git clone https://github.com/basheer1236/agentic_lead_intelligence.git
+cd agentic_lead_intelligence
+```
 
 ---
 
-## 💻 Local Workstation Setup & Execution
+### Step 2: Run the One-Click Setup
 
-### Windows (1-Click Launchers)
+This automatically creates your Python virtual environment (`.venv`), installs all required libraries, and downloads headless browser binaries.
 
-1. **First-Time Setup**:
-   Double-click `setup.bat` (or execute in PowerShell):
-   ```cmd
-   setup.bat
-   ```
-   *(Creates `.venv`, installs dependencies, downloads browser binaries, guides `.env` setup, and initializes DB).*
+* **On Windows (Easiest)**:
+  Double-click `setup.bat` or run:
+  ```cmd
+  setup.bat
+  ```
 
-2. **Launch the Executive Web Dashboard**:
-   Double-click `launch_ui.bat`:
-   ```cmd
-   launch_ui.bat
-   ```
-   *Automatically starts the FastAPI server and opens `http://localhost:8000` in your default browser.*
-
-3. **Or Run Pipeline Directly via CLI**:
-   Double-click `run.bat`:
-   ```cmd
-   run.bat
-   ```
-   *Processes RSS articles, writes leads to Neon DB, and opens `data/exports/` with generated Excel files.*
+* **On macOS / Linux**:
+  ```bash
+  chmod +x setup.sh run.sh launch_ui.sh
+  ./setup.sh
+  ```
 
 ---
 
-### macOS / Linux
+### Step 3: Configure Your API Key (`.env`)
 
-1. **First-Time Setup**:
-   ```bash
-   chmod +x setup.sh run.sh launch_ui.sh
-   ./setup.sh
-   ```
+Create a `.env` file in the project root folder (you can copy `.env.example`):
 
-2. **Launch Web Dashboard**:
-   ```bash
-   ./launch_ui.sh
-   ```
-   Open `http://localhost:8000` in your browser.
-
-3. **Or Run CLI Pipeline**:
-   ```bash
-   ./run.sh
-   ```
-
----
-
-### VS Code (IDE Experience)
-
-Pre-configured launch profiles are provided in `.vscode/launch.json`:
-1. Open the project in VS Code: `code .`
-2. Select Python Interpreter: `Ctrl+Shift+P` -> **Python: Select Interpreter** -> `./.venv/Scripts/python.exe`.
-3. Open **Run & Debug** (`Ctrl+Shift+D`):
-   - **Executive Web UI (FastAPI)**: Press `F5` to start the live dashboard.
-   - **Run Pipeline CLI**: Step through the pipeline in debug mode.
-   - **Run Pytest Suite**: Execute unit and architecture validation tests.
-
----
-
-## ⚙️ Universal LLM Configuration Recipes (`.env`)
-
-You can switch LLM providers at any time by updating `.env` (or via the **Live Configuration** card on the Web Dashboard):
-
-### 1. Google Gemini (Recommended - Fast & High Rate Limits)
 ```env
+# 1. Database Connection (Neon Cloud PostgreSQL)
+DATABASE_URL=postgresql://<user>:<password>@<neon-endpoint>.neon.tech/neondb?sslmode=require
+
+# 2. LLM Provider (Google Gemini is free and fast)
 LLM_PROVIDER=gemini
-LLM_API_KEY=AIzaSy...
+LLM_API_KEY=your_gemini_api_key_here
 LLM_MODEL=gemini-flash-latest
+
+# 3. Web Search Provider (Optional - uses built-in mock if left empty)
+SEARCH_PROVIDER=tavily
+TAVILY_API_KEY=
 ```
 
-### 2. OpenRouter (Access to Claude, GPT-4o, DeepSeek, etc.)
-```env
-LLM_PROVIDER=openrouter
-LLM_API_KEY=sk-or-v1-...
-LLM_MODEL=openai/gpt-4o-mini
-```
+> **Where to get a free Gemini API key?**  
+> Go to [Google AI Studio](https://aistudio.google.com/) and click **Get API key** (it's 100% free with generous rate limits).
 
-### 3. Groq (Ultra-Fast Inference)
-```env
-LLM_PROVIDER=groq
-LLM_API_KEY=gsk_...
-LLM_MODEL=llama-3.3-70b-versatile
-```
+---
 
-### 4. OpenAI
-```env
-LLM_PROVIDER=openai
-LLM_API_KEY=sk-proj-...
-LLM_MODEL=gpt-4o-mini
-```
+### Step 4: Launch and Use the Application!
 
-### 5. Local Ollama (Zero Cost / Offline)
-```env
-LLM_PROVIDER=ollama
-LLM_API_KEY=ollama
-LLM_MODEL=llama3:latest
-LLM_BASE_URL=http://localhost:11434/v1
+#### Option A: Executive Web Dashboard (Recommended)
+* **Windows**: Double-click `launch_ui.bat`
+* **macOS / Linux**: Run `./launch_ui.sh`
+* **Or via Terminal**:
+  ```bash
+  python -m app.ui.server
+  ```
+👉 Open your browser to **`http://localhost:8000`**!
+* Click the blue **"Run Pipeline"** button.
+* Watch real-time streaming logs as agents analyze articles.
+* Click **"Download Excel"** when finished to get your formatted lead report.
+
+#### Option B: Direct CLI Execution (Terminal Only)
+* **Windows**: Double-click `run.bat`
+* **macOS / Linux**: Run `./run.sh`
+* Output files will be generated in `./data/exports/lead_intelligence_master.xlsx`.
+
+#### Option C: In VS Code
+1. Open the project in VS Code: `code .`
+2. Press `Ctrl + Shift + D` (Run & Debug menu).
+3. Select **"🚀 Launch Executive Dashboard (Web UI)"** and press `F5`.
+
+---
+
+## 🌐 Cloud Hosting Guide (Zero Docker / Native Python)
+
+You can easily host this application on any cloud platform in under 3 minutes:
+
+### Deploying to Render / Railway / Heroku
+1. Connect your GitHub repository (`https://github.com/basheer1236/agentic_lead_intelligence`).
+2. Set the service type to **Web Service** with **Python 3.11+**.
+3. **Build Command**:
+   ```bash
+   pip install -r requirements.txt && playwright install --with-deps chromium
+   ```
+4. **Start Command**:
+   ```bash
+   uvicorn app.ui.server:app --host 0.0.0.0 --port $PORT
+   ```
+   *(A pre-configured `Procfile` is included)*.
+5. **Health Check URL**: `/health` (returns HTTP 200 OK).
+6. **Environment Variables**: Add `DATABASE_URL`, `LLM_PROVIDER`, `LLM_API_KEY`, and `LLM_MODEL` in your cloud settings.
+
+### Deploying to Ubuntu / Linux VPS (AWS EC2, DigitalOcean)
+```bash
+git clone https://github.com/basheer1236/agentic_lead_intelligence.git
+cd agentic_lead_intelligence
+./setup.sh
+# Configure your .env file
+nano .env
+# Start the background service using PM2 or systemd
+pm2 start "uvicorn app.ui.server:app --host 0.0.0.0 --port 8000" --name "lead-intel"
 ```
 
 ---
 
-## 📊 Deliverables & Export Structure
+## 🔄 Universal LLM Configuration
 
-Every pipeline run produces synchronized deliverables:
+You are not locked into any single AI provider. Simply switch the provider and model in `.env` (or on the fly from the Web Dashboard at `http://localhost:8000`):
 
-1. **Excel Workbooks (`data/exports/`)**:
-   - `lead_intelligence_master.xlsx`: Full relational master workbook containing 4 synchronized worksheets:
-     * **`README`**: Methodologies, scoring logic, field definitions, and schema relationships.
-     * **`Lead Intelligence Master`**: Project metadata, source articles, locations, estimated budgets, and carpet areas.
-     * **`Interior Designer Master`**: Lead scores (0–100), high-value qualification flag, studio names, website URLs, Instagram links, and verified contact numbers.
-     * **`Rug Opportunity Tracker`**: Dimension recommendations, luxury suitability scores, material/pattern requirements, and buyer intent.
-   - `lead_intelligence.xlsx`: Timestamped export.
-
-2. **Neon Cloud PostgreSQL**:
-   - Persisted across normalized tables (`projects`, `designers`, `rug_opportunities`, `scores`, `pipeline_runs`) queryable by external BI tools or SQL clients.
+| Provider | `LLM_PROVIDER` | `LLM_MODEL` | Where to get Key |
+| :--- | :--- | :--- | :--- |
+| **Google Gemini** *(Default)* | `gemini` | `gemini-flash-latest` | [aistudio.google.com](https://aistudio.google.com/) |
+| **Groq** *(Ultra Fast)* | `groq` | `llama-3.3-70b-versatile` | [console.groq.com](https://console.groq.com/) |
+| **OpenRouter** *(Any Model)* | `openrouter` | `openai/gpt-4o-mini` | [openrouter.ai](https://openrouter.ai/) |
+| **OpenAI** | `openai` | `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com/) |
+| **Local Ollama** *(Offline)* | `ollama` | `llama3:latest` | Runs locally via Ollama |
 
 ---
 
-## 🧪 Automated Testing
+## 📊 Relational Excel Deliverables
 
-Execute the automated test suite to verify end-to-end system health:
+Every pipeline run creates an institutional multi-tab workbook at `data/exports/lead_intelligence_master.xlsx` containing:
+
+1. **`README`**: Methodologies, scoring algorithms, and column definitions.
+2. **`Lead Intelligence Master`**: Project metadata, source articles, locations, estimated budgets, and carpet areas.
+3. **`Interior Designer Master`**: Lead score (0–100), high-value flag, verified studio names, websites, Instagram URLs, and verified phone/email contact details.
+4. **`Rug Opportunity Tracker`**: Dimension recommendations, luxury suitability scores, material/pattern requirements, and buyer intent.
+
+---
+
+## 🧪 Testing & Verification
+
+To verify that all components, database pooling, LLM routing, and Excel export schemas are working properly:
+
 ```bash
 pytest -v
 ```
-Validates:
-* Universal LLM client routing, token trimming, and backoff retries.
-* Neon PostgreSQL connection pooling, reconnect resilience, and schema binding.
-* FastAPI dashboard routes, SSE event streaming, and `/health` monitor.
-* Multi-sheet Excel workbook export integrity and column schemas.
-#   a g e n t i c _ l e a d _ i n t e l l i g e n c e  
- #   a g e n t i c _ l e a d _ i n t e l l i g e n c e  
- 
+
+---
+
+## 🛠️ Project Structure
+
+```text
+agentic_lead_intelligence/
+├── app/
+│   ├── agents/          # LangGraph specialized agents (Relevance, Project, Rug, Designer)
+│   ├── config/          # Pydantic environment settings
+│   ├── export/          # 4-Sheet relational Excel exporter
+│   ├── graph/           # Multi-agent state graph pipeline
+│   ├── llm/             # Universal LLM client with backoff & token trimming
+│   ├── models/          # Structured Pydantic domain models
+│   ├── storage/         # SQLAlchemy database models & Neon connection engine
+│   ├── tools/           # Web scrapers & Tavily public search tools
+│   └── ui/              # FastAPI server, SSE live event streaming & Web Dashboard
+├── data/
+│   └── exports/         # Generated Excel workbooks
+├── migrations/          # Alembic database migration versions
+├── scripts/             # CLI pipeline execution scripts
+├── tests/               # Automated unit and integration test suite
+├── launch_ui.bat        # 1-Click Web Dashboard launcher (Windows)
+├── launch_ui.sh         # 1-Click Web Dashboard launcher (macOS / Linux)
+├── run.bat              # 1-Click CLI Pipeline launcher (Windows)
+├── run.sh               # 1-Click CLI Pipeline launcher (macOS / Linux)
+├── setup.bat            # 1-Click Dependency & DB installer (Windows)
+├── setup.sh             # 1-Click Dependency & DB installer (macOS / Linux)
+├── Procfile             # PaaS cloud deployment configuration
+├── requirements.txt     # Python package dependencies
+└── README.md            # Comprehensive project documentation
+```
