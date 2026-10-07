@@ -278,7 +278,7 @@ const LEVELS=['INFO','STAGE','AGENT','SUCCESS','WARN','ERROR'];
 let sse=null,retry=null,tick=null,startedAt=0,leads=[],sort={key:null,dir:-1},lastStatus='',lastFocus=null,maskedDb='';
 
 const PRESETS={
-  gemini:{model:'gemini-flash-latest',hint:'Recommended: gemini-flash-latest (Free & Fast)',placeholder:'AIzaSy...',base:''},
+  gemini:{model:'gemini-1.5-flash',hint:'Recommended: gemini-1.5-flash or gemini-flash-latest (Free & Stable)',placeholder:'AIzaSy...',base:''},
   groq:{model:'llama-3.3-70b-versatile',hint:'Recommended: llama-3.3-70b-versatile or llama-3.1-8b-instant',placeholder:'gsk_...',base:''},
   openrouter:{model:'openai/gpt-4o-mini',hint:'Recommended: openai/gpt-4o-mini or meta-llama/llama-3.3-70b-instruct:free',placeholder:'sk-or-v1-...',base:''},
   openai:{model:'gpt-4o-mini',hint:'Recommended: gpt-4o-mini',placeholder:'sk-proj-...',base:''},

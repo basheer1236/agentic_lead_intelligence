@@ -121,12 +121,44 @@ class LLMClient:
             err_msg = str(exc).lower()
             if "rate limit" in err_msg or "429" in err_msg:
                 raise RateLimitError(f"LLM API rate limit exceeded: {exc}") from exc
+            
+            # Smart fallback for Gemini deprecated/versioned model aliases
+            if "404" in err_msg or "not found" in err_msg or "no longer available" in err_msg:
+                if self.provider in ("gemini", "google") and self.model not in ("gemini-1.5-flash", "gemini-flash-latest"):
+                    for fallback in ("gemini-1.5-flash", "gemini-flash-latest"):
+                        try:
+                            logger.info("Attempting Gemini fallback model: %s", fallback)
+                            fb_resp = self.client.chat.completions.create(
+                                model=fallback,
+                                messages=[
+                                    {"role": "system", "content": system_prompt},
+                                    {"role": "user", "content": user_prompt},
+                                ],
+                            )
+                            fb_msg = fb_resp.choices[0].message
+                            fb_content = getattr(fb_msg, "content", None) or ""
+                            if not fb_content.strip() and hasattr(fb_msg, "reasoning") and getattr(fb_msg, "reasoning", None):
+                                fb_content = getattr(fb_msg, "reasoning")
+                            if fb_content:
+                                self.model = fallback
+                                return fb_content
+                        except Exception:
+                            continue
+                raise InvalidConfigurationError(f"LLM model not found or unavailable: {exc}") from exc
+
+            if "401" in err_msg or "unauthorized" in err_msg or "invalid api key" in err_msg:
+                raise InvalidConfigurationError(f"Invalid LLM API Key: {exc}") from exc
+
             raise TemporaryServerError(f"LLM API server error: {exc}") from exc
 
         except Exception as exc:
             err_msg = str(exc).lower()
             if "rate limit" in err_msg or "429" in err_msg:
                 raise RateLimitError(f"LLM API rate limit exceeded: {exc}") from exc
+            if "404" in err_msg or "not found" in err_msg or "no longer available" in err_msg:
+                raise InvalidConfigurationError(f"LLM model unavailable: {exc}") from exc
+            if "401" in err_msg or "unauthorized" in err_msg:
+                raise InvalidConfigurationError(f"Invalid LLM API Key: {exc}") from exc
             raise
 
     def _generate_anthropic(self, system_prompt: str, user_prompt: str) -> str:
