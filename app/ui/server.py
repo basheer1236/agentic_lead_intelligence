@@ -139,37 +139,11 @@ async def list_exports():
     return results
 
 
-@app.get("/cost-report.pdf")
-@app.get("/api/reports/cost-benchmark")
-async def download_cost_report_pdf():
-    pdf_path = Path("Agentic_Lead_Intelligence_Cost_and_Token_Benchmark.pdf")
-    if not pdf_path.exists():
-        from scripts.generate_cost_report_pdf import generate_pdf
-        await generate_pdf()
-    return FileResponse(
-        path=pdf_path,
-        filename="Agentic_Lead_Intelligence_Cost_and_Token_Benchmark.pdf",
-        media_type="application/pdf",
-    )
-
-
 @app.get("/api/exports/download/{filename}")
 async def download_export(filename: str):
     # Sanitize filename
     safe_name = Path(filename).name
     file_path = EXPORTS_DIR / safe_name
-
-    # Handle PDF files
-    if safe_name.lower().endswith(".pdf"):
-        if not file_path.exists():
-            root_pdf = Path("Agentic_Lead_Intelligence_Cost_and_Token_Benchmark.pdf")
-            if root_pdf.exists():
-                file_path = root_pdf
-        return FileResponse(
-            path=file_path,
-            filename=safe_name,
-            media_type="application/pdf",
-        )
 
     # If Excel file doesn't exist yet on disk, generate it dynamically from the database
     if not file_path.exists():

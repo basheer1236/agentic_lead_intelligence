@@ -25,8 +25,8 @@ PROVIDER_BASE_URLS = {
 PROVIDER_DEFAULT_MODELS = {
     "openai": "gpt-4o-mini",
     "openrouter": "openai/gpt-4o-mini",
-    "gemini": "gemini-1.5-flash",
-    "google": "gemini-1.5-flash",
+    "gemini": "gemini-3.6-flash",
+    "google": "gemini-3.6-flash",
     "groq": "llama-3.3-70b-versatile",
     "deepseek": "deepseek-chat",
     "mistral": "mistral-small-latest",
