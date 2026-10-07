@@ -176,9 +176,7 @@ def main():
         db = SessionLocal()
         exporter = ExcelExporter()
         export_path = exporter.export(db, filename="lead_intelligence_master.xlsx")
-        export_path_std = exporter.export(db, filename="lead_intelligence.xlsx")
-        print(f"Excel export generated successfully: {export_path}")
-        print(f"Excel export generated successfully: {export_path_std}")
+        print(f"Excel master report generated successfully: {export_path}")
         db.close()
     except Exception as exc:
         print(f"Excel export failed: {exc}")

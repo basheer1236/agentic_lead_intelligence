@@ -374,16 +374,14 @@ class PipelineRunner:
             # Stage 6: Excel Export Generation
             # -----------------------------------------------------------------
             self._update_stage(6, "Generating Multi-Sheet Master Excel Report", 92)
-            self.add_log("STAGE", "[6/6] Generating relationally linked Excel workbooks...")
+            self.add_log("STAGE", "[6/6] Generating relationally linked Master Excel workbook...")
 
             db = SessionLocal()
             try:
                 exporter = ExcelExporter()
                 p_master = exporter.export(db, filename="lead_intelligence_master.xlsx")
-                p_std = exporter.export(db, filename="lead_intelligence.xlsx")
-                self.state["latest_export_files"] = [str(p_master), str(p_std)]
+                self.state["latest_export_files"] = [str(p_master)]
                 self.add_log("SUCCESS", f"Master Export: {p_master.name} ready.")
-                self.add_log("SUCCESS", f"Standard Export: {p_std.name} ready.")
             finally:
                 db.close()
 
