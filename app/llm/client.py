@@ -158,8 +158,8 @@ class LLMClient:
                     pass
                 err_msg = f"HTTP {exc.code} {exc.reason}: {err_body}".lower()
                 last_err = exc
-                if exc.code == 429 or "rate limit" in err_msg:
-                    raise RateLimitError(f"Gemini API rate limit exceeded: {err_body}") from exc
+                if exc.code == 429 or "rate limit" in err_msg or "resource_exhausted" in err_msg:
+                    continue
                 if exc.code == 400 and ("api_key_invalid" in err_msg or "invalid api key" in err_msg):
                     raise InvalidConfigurationError(f"Invalid Gemini API Key: {err_body}") from exc
                 if exc.code in (404, 503):
@@ -170,6 +170,8 @@ class LLMClient:
                 continue
 
         if last_err:
+            if hasattr(last_err, 'code') and last_err.code == 429:
+                raise RateLimitError(f"Gemini API daily free quota exhausted across models. Please use Groq, OpenRouter, or upgrade Google project billing: {last_err}") from last_err
             raise TemporaryServerError(f"Gemini API error: {last_err}") from last_err
         raise TemporaryServerError("Gemini API returned an empty response.")
 
