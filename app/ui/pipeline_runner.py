@@ -349,9 +349,25 @@ class PipelineRunner:
                     self.add_log("ERROR", f"Error on article [{idx}]: {err_msg}")
                     self.state["metrics"]["failed"] += 1
 
-                    # If missing API key or fatal configuration error, halt pipeline immediately
-                    if "Missing required LLM API key" in err_msg or "InvalidConfigurationError" in err_msg:
-                        self.add_log("ERROR", "Fatal LLM configuration error. Halting pipeline execution.")
+                    # Halt immediately on authentication, invalid API key, or fatal model errors
+                    err_lower = err_msg.lower()
+                    is_fatal = (
+                        isinstance(exc, InvalidConfigurationError)
+                        or "invalid llm api key" in err_lower
+                        or "invalid api key" in err_lower
+                        or "invalid_api_key" in err_lower
+                        or "401" in err_msg
+                        or "unauthorized" in err_lower
+                        or "missing required llm api key" in err_lower
+                        or "model_not_found" in err_lower
+                        or "model not found" in err_lower
+                        or "model unavailable" in err_lower
+                        or "quota exceeded" in err_lower
+                        or "resource_exhausted" in err_lower
+                        or "daily free quota exhausted" in err_lower
+                    )
+                    if is_fatal:
+                        self.add_log("ERROR", "Fatal LLM authentication/configuration error. Halting pipeline execution immediately.")
                         self._finish(STATUS_FAILED)
                         return
 

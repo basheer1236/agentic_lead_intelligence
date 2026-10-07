@@ -153,8 +153,22 @@ def main():
             print(f"--> ERROR processing article: {err_msg}")
             metrics["failed"] += 1
 
-            if "Missing required LLM API key" in err_msg or "InvalidConfigurationError" in err_msg:
-                print("\n[ERROR] Fatal LLM configuration error. Halting pipeline execution.")
+            err_lower = err_msg.lower()
+            is_fatal = (
+                "invalid llm api key" in err_lower
+                or "invalid api key" in err_lower
+                or "invalid_api_key" in err_lower
+                or "401" in err_msg
+                or "unauthorized" in err_lower
+                or "missing required llm api key" in err_lower
+                or "model_not_found" in err_lower
+                or "model not found" in err_lower
+                or "model unavailable" in err_lower
+                or "quota exceeded" in err_lower
+                or "resource_exhausted" in err_lower
+            )
+            if is_fatal:
+                print("\n[ERROR] Fatal LLM authentication/configuration error. Halting pipeline immediately.")
                 return
 
         if index < len(batch_articles):
