@@ -27,7 +27,7 @@ PROVIDER_DEFAULT_MODELS = {
     "openrouter": "openai/gpt-4o-mini",
     "gemini": "gemini-3.6-flash",
     "google": "gemini-3.6-flash",
-    "groq": "llama-3.3-70b-versatile",
+    "groq": "openai/gpt-oss-20b",
     "deepseek": "deepseek-chat",
     "mistral": "mistral-small-latest",
     "ollama": "llama3.2",
