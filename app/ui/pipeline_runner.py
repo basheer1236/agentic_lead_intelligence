@@ -36,7 +36,7 @@ class PipelineRunner:
     """
 
     def __init__(self):
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._thread: Optional[threading.Thread] = None
         self._cancel_requested = False
         self._run_id = 0
