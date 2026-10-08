@@ -93,6 +93,8 @@ async def get_status():
     return runner.get_snapshot()
 
 
+import queue
+
 @app.get("/api/pipeline/stream")
 async def stream_pipeline_events(request: Request):
     q = runner.subscribe()
@@ -106,12 +108,15 @@ async def stream_pipeline_events(request: Request):
             while True:
                 if await request.is_disconnected():
                     break
-                try:
-                    # Non-blocking pull with small sleep
-                    event = q.get_nowait()
-                    yield f"data: {json.dumps(event)}\n\n"
-                except Exception:
-                    await asyncio.sleep(0.5)
+                has_event = False
+                while True:
+                    try:
+                        event = q.get_nowait()
+                        yield f"data: {json.dumps(event)}\n\n"
+                        has_event = True
+                    except queue.Empty:
+                        break
+                await asyncio.sleep(0.1)
         finally:
             runner.unsubscribe(q)
 
