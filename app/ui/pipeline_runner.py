@@ -121,13 +121,9 @@ class PipelineRunner:
 
     def start(self, batch_size: int = 5, single_test_mode: bool = False):
         """
-        Manually trigger a pipeline run.
-        Enforces singleton execution and rejects concurrent run requests.
+        Trigger a pipeline run. Supersedes any previous thread immediately.
         """
         with self._lock:
-            if self.state["status"] == STATUS_RUNNING:
-                return False, "Pipeline is already running."
-
             self._run_id += 1
             current_run_id = self._run_id
             self._cancel_requested = False
@@ -164,8 +160,6 @@ class PipelineRunner:
         Immediately cancel and halt the running pipeline, allowing instant restart.
         """
         with self._lock:
-            if self.state["status"] != STATUS_RUNNING:
-                return False, "Pipeline is not currently running."
             self._run_id += 1
             self._cancel_requested = True
             self.state["status"] = STATUS_ABORTED
@@ -226,7 +220,7 @@ class PipelineRunner:
             if provider != "ollama" and (not settings.llm_api_key or not settings.llm_api_key.strip()):
                 self.add_log(
                     "ERROR",
-                    f"Pre-flight check failed: Missing LLM API key for provider '{settings.llm_provider}'. Please enter your API key in Settings (⚙️) or .env.",
+                    f"Pre-flight check failed: Missing LLM API key for provider '{settings.llm_provider}'. Please open Settings (⚙️) and enter your API key.",
                     run_id=run_id
                 )
                 self._finish(STATUS_FAILED, run_id=run_id)
@@ -252,6 +246,15 @@ class PipelineRunner:
             self._update_stage(1, "Aggregating Architectural Digest India RSS", 10, run_id=run_id)
             self.add_log("STAGE", "[1/6] Connecting to Architectural Digest India RSS feed...", run_id=run_id)
             articles = fetch_rss_feed()
+
+            if not self._is_active(run_id):
+                return
+
+            if not articles:
+                self.add_log("WARN", "Could not fetch articles from RSS feed at this time. Please check your internet connection.", run_id=run_id)
+                self._finish(STATUS_COMPLETED, run_id=run_id)
+                return
+
             self.add_log("INFO", f"Fetched {len(articles)} raw articles from RSS feed.", run_id=run_id)
 
             if not self._is_active(run_id):
