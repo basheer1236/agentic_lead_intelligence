@@ -67,7 +67,7 @@ For every supplied search result, provide:
 """
 
 
-def _extract_json(raw_response: str) -> dict:
+def _extract_json(raw_response: str, designer_name: str = "", studio_name: str = "") -> dict:
     """
     Safely extract a JSON object from an LLM response.
 
@@ -271,7 +271,9 @@ Return ONLY this JSON:
         # -----------------------------------------------------
 
         data = _extract_json(
-            raw_response
+            raw_response,
+            designer_name=designer_name,
+            studio_name=studio_name,
         )
 
         # -----------------------------------------------------

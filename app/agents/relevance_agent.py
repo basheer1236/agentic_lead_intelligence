@@ -48,4 +48,6 @@ Return ONLY valid JSON:
 
         from app.utils.json_cleaner import clean_and_parse_json
         data = clean_and_parse_json(response)
+        if isinstance(data, list):
+            data = data[0] if data else {}
         return RelevanceResult.model_validate(data)

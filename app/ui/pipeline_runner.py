@@ -226,12 +226,17 @@ class PipelineRunner:
                 self._finish(STATUS_FAILED, run_id=run_id)
                 return
 
-            # 3. Informational Check for Web Search / Tavily
-            if (settings.search_provider or "").lower() == "tavily":
+            # 3. Informational Check for Web Search
+            sp = (settings.search_provider or "").lower().strip()
+            if sp in ("duckduckgo", "ddg", "ddgs"):
+                self.add_log("INFO", "DuckDuckGo free live web search enabled for designer verification (zero API cost).", run_id=run_id)
+            elif sp == "tavily":
                 if not settings.tavily_api_key or not settings.tavily_api_key.strip():
                     self.add_log("INFO", "Tavily API key not supplied; defaulting to Mock search for designer verification (zero cost).", run_id=run_id)
                 else:
                     self.add_log("INFO", "Tavily live search enabled for designer verification.", run_id=run_id)
+            else:
+                self.add_log("INFO", f"Web search provider set to: {settings.search_provider or 'mock'}", run_id=run_id)
 
             # 4. Custom Base URL (Optional)
             if settings.llm_base_url and settings.llm_base_url.strip():

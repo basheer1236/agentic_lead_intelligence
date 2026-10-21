@@ -59,6 +59,9 @@ def clean_and_parse_json(text: str) -> dict:
     json_str = re.sub(r"\bTrue\b", "true", json_str)
     json_str = re.sub(r"\bFalse\b", "false", json_str)
 
+    # Sanitize invalid escape sequences (e.g. \_ or \@ generated in markdown)
+    json_str = re.sub(r'\\([^"\\/bfnrtu])', r'\1', json_str)
+
     try:
         return json.loads(json_str, strict=False)
     except Exception:

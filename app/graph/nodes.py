@@ -340,7 +340,10 @@ def designer_enrichment_node(state):
             print(f"[designer_enrichment_node] AD PRO profile error: {exc}")
 
     web_enrichment = None
-    if getattr(settings, "tavily_api_key", None):
+    search_prov = (getattr(settings, "search_provider", "") or "").lower().strip()
+    can_search = search_prov in ("duckduckgo", "ddg", "ddgs") or bool(getattr(settings, "tavily_api_key", None))
+
+    if can_search:
         query = f"{designer_name or ''} {studio_name or ''} interior design".strip()
         if query:
             try:

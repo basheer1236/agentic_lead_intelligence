@@ -18,6 +18,7 @@ playwright
 openai
 anthropic
 tavily-python
+ddgs
 alembic
 pytest
 fastapi

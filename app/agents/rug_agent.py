@@ -69,4 +69,6 @@ Return exactly this JSON structure:
 
         from app.utils.json_cleaner import clean_and_parse_json
         data = clean_and_parse_json(response)
+        if isinstance(data, list):
+            data = data[0] if data else {}
         return RugIntelligence.model_validate(data)

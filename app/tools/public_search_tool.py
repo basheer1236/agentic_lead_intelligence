@@ -101,6 +101,48 @@ class PublicSearchTool:
         )
 
 
+class DuckDuckGoSearchProvider(SearchProvider):
+    """
+    100% Free, zero-API-key web search using DuckDuckGo (via ddgs).
+    """
+
+    def search(
+        self,
+        query: str,
+        max_results: int = 10,
+    ) -> list[dict]:
+
+        print(f"[DuckDuckGoSearch] Searching: {query}")
+        try:
+            from ddgs import DDGS
+        except ImportError:
+            try:
+                from duckduckgo_search import DDGS
+            except ImportError:
+                print("[DuckDuckGoSearch] Neither 'ddgs' nor 'duckduckgo_search' installed. Falling back to empty results.")
+                return []
+
+        results = []
+        try:
+            with DDGS() as ddgs:
+                raw_results = list(ddgs.text(query, max_results=max_results))
+                for item in raw_results:
+                    results.append(
+                        {
+                            "title": item.get("title"),
+                            "url": item.get("href") or item.get("url"),
+                            "snippet": item.get("body") or item.get("content"),
+                            "source_type": "public_web_search",
+                            "score": 1.0,
+                        }
+                    )
+        except Exception as exc:
+            print(f"[DuckDuckGoSearch] Error during search: {exc}")
+
+        print(f"[DuckDuckGoSearch] Results: {len(results)}")
+        return results
+
+
 class MockSearchProvider(SearchProvider):
 
     def search(
@@ -120,16 +162,19 @@ class MockSearchProvider(SearchProvider):
 def create_search_tool() -> PublicSearchTool:
 
     provider_name = (
-        settings.search_provider.lower()
+        (settings.search_provider or "").lower().strip()
     )
 
-    if provider_name == "tavily":
+    if provider_name in ("duckduckgo", "ddg", "ddgs"):
+        provider = DuckDuckGoSearchProvider()
+
+    elif provider_name == "tavily":
         if not settings.tavily_api_key:
             provider = MockSearchProvider()
         else:
             provider = TavilySearchProvider()
 
-    elif provider_name in ("mock", "none"):
+    elif provider_name in ("mock", "none", ""):
         provider = MockSearchProvider()
 
     else:
