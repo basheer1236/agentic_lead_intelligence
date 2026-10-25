@@ -326,7 +326,7 @@ def _parse_html(
         ):
 
             email = href[
-                len("mailto:")
+                len("mailto:"):
             ].split(
                 "?",
                 1,
@@ -367,7 +367,7 @@ def _parse_html(
         ):
 
             phone = href[
-                len("tel:")
+                len("tel:"):
             ].strip()
 
             if phone:

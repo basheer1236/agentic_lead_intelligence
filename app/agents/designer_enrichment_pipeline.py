@@ -92,6 +92,15 @@ class DesignerEnrichmentPipeline:
                 )
 
         # -----------------------------------------
+        # Clean & normalize official website root domain
+        # -----------------------------------------
+        if profile.website:
+            from urllib.parse import urlparse
+            p_web = urlparse(profile.website)
+            if p_web.netloc:
+                profile.website = f"{p_web.scheme or 'https'}://{p_web.netloc}"
+
+        # -----------------------------------------
         # 5. Validate & verify social media URLs
         # -----------------------------------------
         from app.utils.url_validator import validate_social_url

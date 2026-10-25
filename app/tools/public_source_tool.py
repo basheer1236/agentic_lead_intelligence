@@ -110,92 +110,98 @@ def _parse_source_html(
     )
 
     # ---------------------------------------------------------
-    # Remove non-content elements
+    # 1. Extract Links, Mailto Emails, Tel Phones
     # ---------------------------------------------------------
-
-    for tag in soup(
-        [
-            "script",
-            "style",
-            "noscript",
-            "svg",
-            "nav",
-            "footer",
-        ]
-    ):
-        tag.decompose()
-
-    # ---------------------------------------------------------
-    # Title
-    # ---------------------------------------------------------
-
-    title = ""
-
-    if soup.title:
-        title = soup.title.get_text(
-            " ",
-            strip=True,
-        )
-
-    # ---------------------------------------------------------
-    # Visible text
-    # ---------------------------------------------------------
-
-    text = soup.get_text(
-        " ",
-        strip=True,
-    )
-
-    # ---------------------------------------------------------
-    # Links
-    # ---------------------------------------------------------
-
     links = []
+    emails_set = set()
+    phones_set = set()
 
-    for link in soup.find_all(
-        "a",
-        href=True,
-    ):
+    for link in soup.find_all("a", href=True):
+        raw_href = str(link.get("href", "")).strip()
+        lower_href = raw_href.lower()
 
-        href = urljoin(
-            final_url,
-            link["href"],
-        )
+        if lower_href.startswith("mailto:"):
+            email_val = raw_href[len("mailto:"):].split("?", 1)[0].strip()
+            if email_val and "@" in email_val:
+                emails_set.add(email_val)
+            continue
 
+        if lower_href.startswith("tel:"):
+            phone_val = raw_href[len("tel:"):].split("?", 1)[0].strip()
+            if phone_val:
+                phones_set.add(phone_val)
+            continue
+
+        full_url = urljoin(final_url, raw_href)
         links.append(
             {
-                "text": link.get_text(
-                    " ",
-                    strip=True,
-                ),
-                "url": href,
+                "text": link.get_text(" ", strip=True),
+                "url": full_url,
             }
         )
 
     # ---------------------------------------------------------
-    # Emails
+    # 2. Extract Social Links (from full markup)
     # ---------------------------------------------------------
-
-    emails = _extract_emails(
-        text
-    )
-
-    # ---------------------------------------------------------
-    # Phones
-    # ---------------------------------------------------------
-
-    phones = _extract_phones(
-        text
-    )
-
-    # ---------------------------------------------------------
-    # Social links
-    # ---------------------------------------------------------
-
     social = _extract_social_links(
         soup,
         final_url,
     )
+
+    # ---------------------------------------------------------
+    # 3. Detect About and Contact Pages (Same Domain)
+    # ---------------------------------------------------------
+    contact_pages = []
+    about_pages = []
+
+    contact_keywords = [
+        "contact", "contact-us", "contactus", "get-in-touch", "reach-us", "connect"
+    ]
+    about_keywords = [
+        "about", "about-us", "aboutus", "studio", "profile", "team", "founder", "story", "who-we-are"
+    ]
+
+    base_domain = urlparse(final_url).netloc.lower()
+
+    for item in links:
+        link_url = item["url"]
+        link_text = item["text"].lower()
+        if not link_url.startswith(("http://", "https://")):
+            continue
+
+        parsed_l = urlparse(link_url)
+        if parsed_l.netloc and parsed_l.netloc.lower() != base_domain:
+            continue
+
+        clean_link = link_url.split("#")[0].rstrip("/")
+        lower_clean = clean_link.lower()
+
+        if any(k in lower_clean or k in link_text for k in contact_keywords):
+            if clean_link not in contact_pages and clean_link != final_url.rstrip("/"):
+                contact_pages.append(clean_link)
+
+        if any(k in lower_clean or k in link_text for k in about_keywords):
+            if clean_link not in about_pages and clean_link != final_url.rstrip("/"):
+                about_pages.append(clean_link)
+
+    # ---------------------------------------------------------
+    # 4. Remove Script/Style/Noscript for Text Extraction
+    # ---------------------------------------------------------
+    for tag in soup(["script", "style", "noscript", "svg"]):
+        tag.decompose()
+
+    title = ""
+    if soup.title:
+        title = soup.title.get_text(" ", strip=True)
+
+    text = soup.get_text(" ", strip=True)
+
+    # Search visible content with regex
+    for email in _extract_emails(text):
+        emails_set.add(email)
+
+    for phone in _extract_phones(text):
+        phones_set.add(phone)
 
     return {
         "requested_url": requested_url,
@@ -203,9 +209,11 @@ def _parse_source_html(
         "title": title,
         "text": text,
         "links": links,
-        "emails": emails,
-        "phones": phones,
+        "emails": sorted(emails_set),
+        "phones": sorted(phones_set),
         "social": social,
+        "contact_pages": contact_pages,
+        "about_pages": about_pages,
         "source_type": classify_source(
             final_url
         ),

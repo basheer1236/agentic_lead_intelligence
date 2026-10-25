@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from datetime import datetime, timezone
 
 from app.config.settings import settings
@@ -356,13 +357,48 @@ def designer_enrichment_node(state):
                     search_results=raw_results,
                 )
                 relevant_sources = []
+                visited_urls = set()
+                discovered_subpages = []
+
                 for src in research_res.sources:
                     if src.relevance and src.url:
+                        clean_u = src.url.split("#")[0].rstrip("/")
+                        if clean_u in visited_urls:
+                            continue
+                        visited_urls.add(clean_u)
                         try:
                             source_data = fetch_public_source(src.url)
+                            source_data["requested_url"] = src.url
                             relevant_sources.append(source_data)
-                        except Exception:
-                            pass
+
+                            # If this is an official studio domain, discover About & Contact pages
+                            parsed = urlparse(src.url)
+                            netloc = parsed.netloc.lower()
+                            non_studio_domains = {
+                                "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
+                                "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
+                                "pinterest.com", "twitter.com", "x.com"
+                            }
+                            if netloc and not any(ns in netloc for ns in non_studio_domains):
+                                for page_list in (source_data.get("about_pages", []), source_data.get("contact_pages", [])):
+                                    for subpage_url in page_list:
+                                        clean_sub = subpage_url.split("#")[0].rstrip("/")
+                                        if clean_sub not in visited_urls and clean_sub not in discovered_subpages:
+                                            discovered_subpages.append(clean_sub)
+                                            visited_urls.add(clean_sub)
+                                            break  # At most 1 about and 1 contact page per studio
+                        except Exception as exc:
+                            print(f"[designer_enrichment_node] Web research fetch error: {exc}")
+
+                # Deep-crawl discovered About and Contact subpages on studio domain
+                for subpage_url in discovered_subpages:
+                    try:
+                        subpage_data = fetch_public_source(subpage_url)
+                        subpage_data["requested_url"] = subpage_url
+                        relevant_sources.append(subpage_data)
+                    except Exception as exc:
+                        print(f"[designer_enrichment_node] Subpage fetch error for {subpage_url}: {exc}")
+
                 if relevant_sources:
                     pipeline = DesignerEnrichmentPipeline()
                     web_enrichment = pipeline.process_sources(
@@ -686,4 +722,4 @@ def persistence_node(state):
         }
 
     finally:
-        db.close()
+        db.close()

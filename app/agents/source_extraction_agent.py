@@ -177,6 +177,61 @@ class SourceExtractionAgent:
                     )
 
         # ---------------------------------------------------------
+        # Self-URL Direct Validation (Profile / Official Website)
+        # ---------------------------------------------------------
+        from urllib.parse import urlparse
+        urls_to_inspect = []
+        for k in ("requested_url", "final_url", "url"):
+            val_u = source.get(k)
+            if val_u and val_u not in urls_to_inspect:
+                urls_to_inspect.append(val_u)
+
+        for check_url in urls_to_inspect:
+            lower_u = check_url.lower()
+
+            # Check if this source URL is itself a verified social profile (handles login wall)
+            for social_type, field_name in social_mapping.items():
+                if f"{social_type}.com/" in lower_u:
+                    val = validate_social_url(
+                        url=check_url,
+                        designer_name=designer_name,
+                        studio_name=studio_name,
+                        platform_target=social_type
+                    )
+                    if val.is_profile_type and val.verification_status in ("VERIFIED", "BLOCKED_OR_UNVERIFIED", "UNVERIFIED"):
+                        fields.append(
+                            ExtractedField(
+                                field=field_name,
+                                value=val.normalized_url or check_url,
+                                source_url=source_url,
+                                source_type=source_type,
+                                evidence_text=f"Direct {social_type.title()} profile identified: {val.normalized_url or check_url}",
+                                confidence=val.confidence or 0.95,
+                            )
+                        )
+
+            # Check if this source URL is the studio's official website
+            parsed_src = urlparse(check_url)
+            netloc = parsed_src.netloc.lower()
+            generic_domains = {
+                "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
+                "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
+                "pinterest.com", "twitter.com", "x.com"
+            }
+            if netloc and not any(gd in netloc for gd in generic_domains):
+                root_site = f"{parsed_src.scheme or 'https'}://{parsed_src.netloc}"
+                fields.append(
+                    ExtractedField(
+                        field="website",
+                        value=root_site,
+                        source_url=source_url,
+                        source_type=source_type,
+                        evidence_text=f"Official studio root website identified: {root_site}",
+                        confidence=0.98,
+                    )
+                )
+
+        # ---------------------------------------------------------
         # Semantic extraction
         # ---------------------------------------------------------
 
