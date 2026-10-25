@@ -422,6 +422,11 @@ def _parse_html(
         "contactus",
         "get-in-touch",
         "reach-us",
+        "connect",
+        "reach",
+        "enquiry",
+        "enquiries",
+        "contact-info",
     ]
 
     for link in links:
@@ -453,6 +458,17 @@ def _parse_html(
         "aboutus",
         "studio",
         "profile",
+        "team",
+        "founder",
+        "story",
+        "who-we-are",
+        "info",
+        "information",
+        "details",
+        "overview",
+        "press",
+        "studio-info",
+        "firm-info",
     ]
 
     for link in links:

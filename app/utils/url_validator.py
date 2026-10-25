@@ -415,6 +415,49 @@ def validate_social_url(
             confidence=confidence if matched else 0.8
         )
 
+    # Validate YouTube Channel / Page
+    elif platform == "youtube":
+        segments = [s for s in path.split("/") if s]
+        if not segments:
+            return URLValidationResult(
+                url=url,
+                normalized_url=norm_url,
+                platform=platform,
+                is_valid_format=True,
+                is_profile_type=False,
+                verification_status="INVALID",
+                rejection_reason="YouTube URL missing channel/handle path segment"
+            )
+
+        yt_system_paths = {
+            "watch", "feed", "results", "playlist", "live", "premium", "shorts", "upload"
+        }
+        handle = segments[0]
+        if handle.lower() in yt_system_paths and len(segments) == 1:
+            return URLValidationResult(
+                url=url,
+                normalized_url=norm_url,
+                platform=platform,
+                is_valid_format=True,
+                is_profile_type=False,
+                verification_status="INVALID",
+                rejection_reason=f"YouTube URL handle '{handle}' is a reserved non-profile system path"
+            )
+        if handle.lower() in ("c", "channel", "user") and len(segments) > 1:
+            handle = segments[1]
+
+        clean_handle = handle.lstrip("@")
+        matched, confidence, reason = _check_identity_match(clean_handle, designer_name, studio_name, title, snippet)
+        return URLValidationResult(
+            url=url,
+            normalized_url=norm_url,
+            platform=platform,
+            is_valid_format=True,
+            is_profile_type=True,
+            verification_status="VERIFIED" if matched else "UNVERIFIED",
+            confidence=confidence if matched else 0.8
+        )
+
     # Generic or other platforms
     return URLValidationResult(
         url=url,

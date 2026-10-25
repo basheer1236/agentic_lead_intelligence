@@ -155,10 +155,10 @@ def _parse_source_html(
     about_pages = []
 
     contact_keywords = [
-        "contact", "contact-us", "contactus", "get-in-touch", "reach-us", "connect"
+        "contact", "contact-us", "contactus", "get-in-touch", "reach-us", "connect", "reach", "enquiry", "enquiries", "contact-info"
     ]
     about_keywords = [
-        "about", "about-us", "aboutus", "studio", "profile", "team", "founder", "story", "who-we-are"
+        "about", "about-us", "aboutus", "studio", "profile", "team", "founder", "story", "who-we-are", "info", "information", "details", "overview", "press", "studio-info", "firm-info"
     ]
 
     base_domain = urlparse(final_url).netloc.lower()

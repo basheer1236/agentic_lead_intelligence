@@ -149,6 +149,18 @@ class DesignerEnrichmentPipeline:
             else:
                 profile.facebook_url = None
 
+        if profile.youtube_url:
+            val = validate_social_url(
+                profile.youtube_url,
+                designer_name=designer_name,
+                studio_name=studio_name,
+                platform_target="youtube"
+            )
+            if val.verification_status in ("VERIFIED", "BLOCKED_OR_UNVERIFIED", "UNVERIFIED") and val.is_profile_type:
+                profile.youtube_url = val.normalized_url or profile.youtube_url
+            else:
+                profile.youtube_url = None
+
         # -----------------------------------------
         # 6. Convert resolved claims into evidence
         # -----------------------------------------
