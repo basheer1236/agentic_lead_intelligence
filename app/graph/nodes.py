@@ -1,3 +1,4 @@
+import re
 from urllib.parse import urlparse
 from datetime import datetime, timezone
 
@@ -272,7 +273,7 @@ def designer_resolution_node(state):
     designer = state.get("designer", {})
 
     designer_name = designer.get("name")
-    studio_name = designer.get("studio")
+    studio_name = designer.get("studio") or designer.get("studio_name")
 
     resolver = DesignerResolver()
 
@@ -303,7 +304,7 @@ def designer_resolution_node(state):
 def route_enrichment_gate(state):
     designer = state.get("designer", {})
     designer_name = designer.get("name")
-    studio_name = designer.get("studio")
+    studio_name = designer.get("studio") or designer.get("studio_name")
 
     if not designer_name and not studio_name:
         return "skip_enrichment"
@@ -346,7 +347,7 @@ def route_enrichment_gate(state):
 def designer_enrichment_node(state):
     designer = dict(state.get("designer", {}))
     designer_name = designer.get("name")
-    studio_name = designer.get("studio")
+    studio_name = designer.get("studio") or designer.get("studio_name")
 
     profile_url = state.get("designer_profile_url")
 
@@ -409,7 +410,7 @@ def designer_enrichment_node(state):
                             print(f"[designer_enrichment_node] Web research fetch error: {exc}")
 
                 # Deep-crawl discovered About and Contact subpages on studio domain
-                for subpage_url in discovered_subpages:
+                for subpage_url in [u for u in discovered_subpages if u.startswith(("http://", "https://"))]:
                     try:
                         subpage_data = fetch_public_source(subpage_url)
                         subpage_data["requested_url"] = subpage_url
