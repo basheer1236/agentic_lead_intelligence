@@ -1,3 +1,25 @@
+def _is_official_studio_domain(netloc: str, designer_name: str | None = None, studio_name: str | None = None) -> bool:
+    if not netloc:
+        return False
+    netloc_clean = re.sub(r'^(www\.)', '', netloc.lower())
+    non_studio = {
+        "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
+        "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
+        "pinterest.com", "twitter.com", "x.com", "indiadesignid.com", "homegrown.co.in",
+        "outlookindia.com", "vogue.in", "elledecor.in", "f6s.com", "rocketreach.co"
+    }
+    if any(ns in netloc_clean for ns in non_studio):
+        return False
+    tokens = set()
+    for name in (studio_name, designer_name):
+        if name:
+            for t in re.split(r'[^a-zA-Z0-9]', name.lower()):
+                if len(t) >= 4 and t not in ("studio", "design", "designs", "architects", "architecture", "interior", "interiors", "group", "the", "and"):
+                    tokens.add(t)
+    if not tokens:
+        return False
+    return any(t in netloc_clean for t in tokens)
+
 import json
 import re
 
@@ -213,12 +235,7 @@ class SourceExtractionAgent:
             # Check if this source URL is the studio's official website
             parsed_src = urlparse(check_url)
             netloc = parsed_src.netloc.lower()
-            generic_domains = {
-                "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
-                "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
-                "pinterest.com", "twitter.com", "x.com"
-            }
-            if netloc and not any(gd in netloc for gd in generic_domains):
+            if netloc and _is_official_studio_domain(netloc, designer_name, studio_name):
                 root_site = f"{parsed_src.scheme or 'https'}://{parsed_src.netloc}"
                 fields.append(
                     ExtractedField(

@@ -19,6 +19,29 @@ from app.agents.designer_enrichment_pipeline import DesignerEnrichmentPipeline
 from app.agents.designer_enrichment_merge import merge_designer_enrichment
 from app.models.source_extraction import ExtractedField
 
+def _is_official_studio_domain(netloc: str, designer_name: str | None = None, studio_name: str | None = None) -> bool:
+    if not netloc:
+        return False
+    netloc_clean = re.sub(r'^(www\.)', '', netloc.lower())
+    non_studio = {
+        "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
+        "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
+        "pinterest.com", "twitter.com", "x.com", "indiadesignid.com", "homegrown.co.in",
+        "outlookindia.com", "vogue.in", "elledecor.in", "f6s.com", "rocketreach.co"
+    }
+    if any(ns in netloc_clean for ns in non_studio):
+        return False
+    tokens = set()
+    for name in (studio_name, designer_name):
+        if name:
+            for t in re.split(r'[^a-zA-Z0-9]', name.lower()):
+                if len(t) >= 4 and t not in ("studio", "design", "designs", "architects", "architecture", "interior", "interiors", "group", "the", "and"):
+                    tokens.add(t)
+    if not tokens:
+        return False
+    return any(t in netloc_clean for t in tokens)
+
+
 from app.storage.database import SessionLocal
 from app.storage.repositories.designer_repository import DesignerRepository
 from app.storage.persistence.pipeline_persistence import PipelinePersistenceService
@@ -345,7 +368,7 @@ def designer_enrichment_node(state):
     can_search = search_prov in ("duckduckgo", "ddg", "ddgs") or bool(getattr(settings, "tavily_api_key", None))
 
     if can_search:
-        query = f"{designer_name or ''} {studio_name or ''} interior design".strip()
+        query = " ".join(f"{designer_name or ''} {studio_name or ''} interior design".split())
         if query:
             try:
                 search_tool = create_search_tool()
@@ -374,12 +397,7 @@ def designer_enrichment_node(state):
                             # If this is an official studio domain, discover About & Contact pages
                             parsed = urlparse(src.url)
                             netloc = parsed.netloc.lower()
-                            non_studio_domains = {
-                                "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
-                                "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
-                                "pinterest.com", "twitter.com", "x.com"
-                            }
-                            if netloc and not any(ns in netloc for ns in non_studio_domains):
+                            if netloc and _is_official_studio_domain(netloc, designer_name, studio_name):
                                 for page_list in (source_data.get("about_pages", []), source_data.get("contact_pages", [])):
                                     for subpage_url in page_list:
                                         clean_sub = subpage_url.split("#")[0].rstrip("/")
