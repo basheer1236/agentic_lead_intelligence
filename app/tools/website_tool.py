@@ -483,6 +483,15 @@ def _parse_html(
         "instagram.com",
         "facebook.com",
         "youtube.com",
+        "threads.com",
+        "threads.net",
+        "twitter.com",
+        "x.com",
+        "linktr.ee",
+        "linktree.com",
+        "pinterest.com",
+        "behance.net",
+        "vimeo.com",
     ]
 
     for link in links:

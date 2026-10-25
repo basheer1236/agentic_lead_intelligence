@@ -248,15 +248,9 @@ class ExcelExporter:
                 COALESCE(contact, 'Not Disclosed') AS contact,
                 COALESCE(email, 'Not Disclosed') AS email,
                 COALESCE(company_description, 'Interior Design Studio Profile') AS company_description,
-                CASE 
-                    WHEN linkedin_verified = True AND linkedin_url IS NOT NULL THEN linkedin_url 
-                    ELSE 'Not Disclosed' 
-                END AS linkedin_url,
+                COALESCE(linkedin_url, 'Not Disclosed') AS linkedin_url,
                 COALESCE(linkedin_verified, False) AS linkedin_verified,
-                CASE 
-                    WHEN instagram_verified = True AND instagram_url IS NOT NULL THEN instagram_url 
-                    ELSE 'Not Disclosed' 
-                END AS instagram_url,
+                COALESCE(instagram_url, 'Not Disclosed') AS instagram_url,
                 COALESCE(instagram_verified, False) AS instagram_verified,
                 COALESCE(facebook_url, 'Not Disclosed') AS facebook_url,
                 COALESCE(youtube_url, 'Not Disclosed') AS youtube_url,

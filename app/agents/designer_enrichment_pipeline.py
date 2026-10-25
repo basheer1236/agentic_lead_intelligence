@@ -128,7 +128,7 @@ class DesignerEnrichmentPipeline:
                 studio_name=studio_name,
                 platform_target="instagram"
             )
-            if val.verification_status in ("VERIFIED", "BLOCKED_OR_UNVERIFIED") and val.is_profile_type:
+            if val.verification_status in ("VERIFIED", "BLOCKED_OR_UNVERIFIED", "UNVERIFIED") and val.is_profile_type:
                 profile.instagram_url = val.normalized_url or profile.instagram_url
                 profile.instagram_verified = (val.verification_status == "VERIFIED")
                 profile.instagram_confidence = val.confidence
@@ -136,6 +136,18 @@ class DesignerEnrichmentPipeline:
                 profile.instagram_url = None
                 profile.instagram_verified = False
                 profile.instagram_confidence = 0.0
+
+        if profile.facebook_url:
+            val = validate_social_url(
+                profile.facebook_url,
+                designer_name=designer_name,
+                studio_name=studio_name,
+                platform_target="facebook"
+            )
+            if val.verification_status in ("VERIFIED", "BLOCKED_OR_UNVERIFIED", "UNVERIFIED") and val.is_profile_type:
+                profile.facebook_url = val.normalized_url or profile.facebook_url
+            else:
+                profile.facebook_url = None
 
         # -----------------------------------------
         # 6. Convert resolved claims into evidence

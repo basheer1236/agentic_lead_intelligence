@@ -371,6 +371,50 @@ def validate_social_url(
             confidence=confidence
         )
 
+    # Validate Facebook Profile / Page
+    elif platform == "facebook":
+        segments = [s for s in path.split("/") if s]
+        if not segments:
+            return URLValidationResult(
+                url=url,
+                normalized_url=norm_url,
+                platform=platform,
+                is_valid_format=True,
+                is_profile_type=False,
+                verification_status="INVALID",
+                rejection_reason="Facebook URL missing page/profile path segment"
+            )
+
+        fb_system_paths = {
+            "help", "login", "pages", "groups", "events", "policies",
+            "privacy", "terms", "watch", "marketplace", "gaming", "share",
+            "sharer.php", "dialog", "plugins", "tr", "ads", "business"
+        }
+        handle = segments[0]
+        if handle.lower() in fb_system_paths and len(segments) == 1:
+            return URLValidationResult(
+                url=url,
+                normalized_url=norm_url,
+                platform=platform,
+                is_valid_format=True,
+                is_profile_type=False,
+                verification_status="INVALID",
+                rejection_reason=f"Facebook URL handle '{handle}' is a reserved non-profile system path"
+            )
+        if handle.lower() == "pages" and len(segments) > 1:
+            handle = segments[1]
+
+        matched, confidence, reason = _check_identity_match(handle, designer_name, studio_name, title, snippet)
+        return URLValidationResult(
+            url=url,
+            normalized_url=norm_url,
+            platform=platform,
+            is_valid_format=True,
+            is_profile_type=True,
+            verification_status="VERIFIED" if matched else "UNVERIFIED",
+            confidence=confidence if matched else 0.8
+        )
+
     # Generic or other platforms
     return URLValidationResult(
         url=url,

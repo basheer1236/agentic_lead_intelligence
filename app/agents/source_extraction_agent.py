@@ -152,17 +152,30 @@ class SourceExtractionAgent:
                 )
             )
 
+        from urllib.parse import urlparse
+        social_and_portal_domains = {
+            "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
+            "threads.com", "threads.net", "twitter.com", "x.com", "linktr.ee",
+            "linktree.com", "pinterest.com", "behance.net", "vimeo.com",
+            "architecturaldigest.in", "wikipedia.org", "indiadesignid.com"
+        }
         for website in source.get("websites", []):
-            fields.append(
-                ExtractedField(
-                    field="website",
-                    value=website,
-                    source_url=source_url,
-                    source_type=source_type,
-                    evidence_text=f"Website link found on source: {website}",
-                    confidence=1.0,
+            parsed_w = urlparse(website)
+            netloc_w = parsed_w.netloc.lower()
+            if any(gd in netloc_w for gd in social_and_portal_domains):
+                continue
+            if _is_official_studio_domain(netloc_w, designer_name, studio_name):
+                root_w = f"{parsed_w.scheme or 'https'}://{parsed_w.netloc}"
+                fields.append(
+                    ExtractedField(
+                        field="website",
+                        value=root_w,
+                        source_url=source_url,
+                        source_type="official_website",
+                        evidence_text=f"Official studio root website identified: {root_w}",
+                        confidence=1.0,
+                    )
                 )
-            )
 
         from app.utils.url_validator import validate_social_url
 
@@ -242,9 +255,9 @@ class SourceExtractionAgent:
                         field="website",
                         value=root_site,
                         source_url=source_url,
-                        source_type=source_type,
+                        source_type="official_website",
                         evidence_text=f"Official studio root website identified: {root_site}",
-                        confidence=0.98,
+                        confidence=1.0,
                     )
                 )
 
