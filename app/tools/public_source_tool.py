@@ -35,6 +35,9 @@ def _extract_phones(text: str) -> list[str]:
 
     for match in matches:
         raw = match.strip()
+        # Discard copyright / date ranges like '2006-2026' or '2010 - 2024'
+        if re.search(r"\b(?:19|20)\d{2}\s*[-–/]\s*(?:19|20)\d{2}\b", raw):
+            continue
         digits = re.sub(r"\D", "", raw)
         if 8 <= len(digits) <= 12:
             if not any(digits.startswith(dp) or digits.endswith(dp) for dp in dummy_prefixes):

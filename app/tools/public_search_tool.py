@@ -111,8 +111,11 @@ class DuckDuckGoSearchProvider(SearchProvider):
         query: str,
         max_results: int = 10,
     ) -> list[dict]:
+        import re
+        clean_query = re.sub(r"[+*'"]", " ", query).strip()
+        clean_query = " ".join(clean_query.split())
 
-        print(f"[DuckDuckGoSearch] Searching: {query}")
+        print(f"[DuckDuckGoSearch] Searching: {clean_query}")
         try:
             from ddgs import DDGS
         except ImportError:
@@ -125,7 +128,7 @@ class DuckDuckGoSearchProvider(SearchProvider):
         results = []
         try:
             with DDGS() as ddgs:
-                raw_results = list(ddgs.text(query, max_results=max_results))
+                raw_results = list(ddgs.text(clean_query, max_results=max_results))
                 for item in raw_results:
                     results.append(
                         {
