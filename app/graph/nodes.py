@@ -27,8 +27,10 @@ def _is_official_studio_domain(netloc: str, designer_name: str | None = None, st
     non_studio = {
         "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
         "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
-        "pinterest.com", "twitter.com", "x.com", "indiadesignid.com", "homegrown.co.in",
-        "outlookindia.com", "vogue.in", "elledecor.in", "f6s.com", "rocketreach.co"
+        "pinterest.com", "twitter.com", "x.com", "threads.com", "threads.net",
+        "linktr.ee", "linktree.com", "medium.com", "tumblr.com",
+        "indiadesignid.com", "homegrown.co.in", "outlookindia.com",
+        "vogue.in", "elledecor.in", "f6s.com", "rocketreach.co"
     }
     if any(ns in netloc_clean for ns in non_studio):
         return False
@@ -36,7 +38,7 @@ def _is_official_studio_domain(netloc: str, designer_name: str | None = None, st
     for name in (studio_name, designer_name):
         if name:
             for t in re.split(r'[^a-zA-Z0-9]', name.lower()):
-                if len(t) >= 4 and t not in ("studio", "design", "designs", "architects", "architecture", "interior", "interiors", "group", "the", "and"):
+                if len(t) >= 3 and t not in ("studio", "design", "designs", "architects", "architecture", "interior", "interiors", "group", "the", "and", "for"):
                     tokens.add(t)
     if not tokens:
         return False
@@ -324,6 +326,16 @@ def route_enrichment_gate(state):
                 db=db, website=website
             )
 
+        # If designer exists but website / site details are missing, ALWAYS force enrichment via Public Search Agent!
+        if existing_designer:
+            has_website = bool(
+                existing_designer.website
+                and existing_designer.website.strip()
+                and existing_designer.website.strip().lower() not in ("not disclosed", "none", "false")
+            )
+            if not has_website:
+                return "enrich_designer"
+
         last_enriched_at = (
             existing_designer.last_enriched_at if existing_designer else None
         )
@@ -365,7 +377,7 @@ def designer_enrichment_node(state):
             print(f"[designer_enrichment_node] AD PRO profile error: {exc}")
 
     web_enrichment = None
-    search_prov = (getattr(settings, "search_provider", "") or "").lower().strip()
+    search_prov = (getattr(settings, "search_provider", "") or "duckduckgo").lower().strip()
     can_search = search_prov in ("duckduckgo", "ddg", "ddgs") or bool(getattr(settings, "tavily_api_key", None))
 
     if can_search:
@@ -380,6 +392,24 @@ def designer_enrichment_node(state):
                     studio_name=studio_name or "",
                     search_results=raw_results,
                 )
+
+                # Deterministic official domain guarantee: Ensure official studio domain from search results is never missed
+                for res in raw_results:
+                    res_url = res.get("url") or ""
+                    p_res = urlparse(res_url)
+                    if p_res.netloc and _is_official_studio_domain(p_res.netloc, designer_name, studio_name):
+                        if not any(getattr(s, "url", None) == res_url for s in research_res.sources):
+                            from app.models.public_research import ResearchSource
+                            research_res.sources.insert(0, ResearchSource(
+                                title=res.get("title", ""),
+                                url=res_url,
+                                source_type="public_web_search",
+                                relevance=True,
+                                confidence=0.95,
+                                reason="Deterministic official studio domain match",
+                                evidence=res.get("snippet", "")
+                            ))
+
                 relevant_sources = []
                 visited_urls = set()
                 discovered_subpages = []
@@ -395,17 +425,16 @@ def designer_enrichment_node(state):
                             source_data["requested_url"] = src.url
                             relevant_sources.append(source_data)
 
-                            # If this is an official studio domain, discover About & Contact pages
+                            # If this is an official studio domain, discover About, Contact & Info pages
                             parsed = urlparse(src.url)
                             netloc = parsed.netloc.lower()
                             if netloc and _is_official_studio_domain(netloc, designer_name, studio_name):
-                                for page_list in (source_data.get("about_pages", []), source_data.get("contact_pages", [])):
+                                for page_list in (source_data.get("about_pages", [])[:2], source_data.get("contact_pages", [])[:2]):
                                     for subpage_url in page_list:
                                         clean_sub = subpage_url.split("#")[0].rstrip("/")
                                         if clean_sub not in visited_urls and clean_sub not in discovered_subpages:
                                             discovered_subpages.append(clean_sub)
                                             visited_urls.add(clean_sub)
-                                            break  # At most 1 about and 1 contact page per studio
                         except Exception as exc:
                             print(f"[designer_enrichment_node] Web research fetch error: {exc}")
 

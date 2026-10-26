@@ -175,6 +175,8 @@ def _parse_source_html(
 
         clean_link = link_url.split("#")[0].rstrip("/")
         lower_clean = clean_link.lower()
+        if "/cdn-cgi/" in lower_clean or "javascript:" in lower_clean:
+            continue
 
         if any(k in lower_clean or k in link_text for k in contact_keywords):
             if clean_link not in contact_pages and clean_link != final_url.rstrip("/"):

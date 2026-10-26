@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     llm_base_url: str = ""
     llm_model: str = ""
 
-    search_provider: str = "tavily"
+    search_provider: str = "duckduckgo"
     tavily_api_key: str = ""
 
     database_url: str = "postgresql://postgres:postgres@localhost:5432/lead_intelligence"
