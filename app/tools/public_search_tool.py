@@ -112,7 +112,8 @@ class DuckDuckGoSearchProvider(SearchProvider):
         max_results: int = 10,
     ) -> list[dict]:
         import re
-        clean_query = re.sub(r"[+*'"]", " ", query).strip()
+        # Sanitize query: DuckDuckGo breaks on boolean operators and special chars
+        clean_query = query.replace("+", " ").replace("*", " ").replace("'", " ").replace('"', " ")
         clean_query = " ".join(clean_query.split())
 
         print(f"[DuckDuckGoSearch] Searching: {clean_query}")
