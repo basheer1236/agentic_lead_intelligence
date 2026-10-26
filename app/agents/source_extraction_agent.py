@@ -1,24 +1,53 @@
 def _is_official_studio_domain(netloc: str, designer_name: str | None = None, studio_name: str | None = None) -> bool:
     if not netloc:
         return False
-    netloc_clean = re.sub(r'^(www\.)', '', netloc.lower())
+    netloc_clean = re.sub(r'^(www\.)', '', netloc.lower().split(':')[0])
     non_studio = {
         "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
         "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
-        "pinterest.com", "twitter.com", "x.com", "indiadesignid.com", "homegrown.co.in",
-        "outlookindia.com", "vogue.in", "elledecor.in", "f6s.com", "rocketreach.co"
+        "pinterest.com", "twitter.com", "x.com", "threads.com", "threads.net",
+        "linktr.ee", "linktree.com", "medium.com", "tumblr.com",
+        "indiadesignid.com", "homegrown.co.in", "outlookindia.com",
+        "vogue.in", "elledecor.in", "f6s.com", "rocketreach.co",
+        "surfacesreporter.com", "surfaces.in", "buildofy.com", "archdaily.com",
+        "re-thinkingthefuture.com", "findglocal.com", "houzz.in", "houzz.com",
+        "justdial.com", "indiamart.com", "tradeindia.com", "yellowpages.in",
+        "sulekha.com", "housing.com", "magicbricks.com", "nobroker.in", "99acres.com",
+        "theroots.in", "dezeen.com", "goodhomes.co.in", "goodhomes.in"
     }
-    if any(ns in netloc_clean for ns in non_studio):
+    if any(netloc_clean == ns or netloc_clean.endswith('.' + ns) for ns in non_studio):
         return False
+    domain_main = netloc_clean.split('.')[0]
+
     tokens = set()
-    for name in (studio_name, designer_name):
-        if name:
-            for t in re.split(r'[^a-zA-Z0-9]', name.lower()):
-                if len(t) >= 4 and t not in ("studio", "design", "designs", "architects", "architecture", "interior", "interiors", "group", "the", "and"):
-                    tokens.add(t)
+    for raw in (studio_name, designer_name):
+        if not raw:
+            continue
+        # 1. Clean words (length >= 3, non-generic)
+        for t in re.split(r'[^a-zA-Z0-9]', raw.lower()):
+            if len(t) >= 3 and t not in ('studio', 'design', 'designs', 'architects', 'architecture', 'interior', 'interiors', 'group', 'the', 'and', 'for', 'plus', 'build'):
+                tokens.add(t)
+
+        # 2. Handle symbol expansions ('+' -> 'plus', '&' -> 'and')
+        expanded = raw.replace('+', 'plus').replace('&', 'and')
+        clean_exp = re.sub(r'[^a-zA-Z0-9]', '', expanded.lower())
+        for gw in ('studio', 'designs', 'design', 'architects', 'architecture', 'interiors', 'interior', 'group', 'the', 'build'):
+            clean_exp = clean_exp.replace(gw, '')
+        if len(clean_exp) >= 2:
+            tokens.add(clean_exp)
+            if clean_exp.endswith('plus'):
+                tokens.add(clean_exp + 's')  # e.g. 'fplus' -> 'fpluss'
+
+        # 3. Concatenated alnum without generic words
+        raw_clean = re.sub(r'[^a-zA-Z0-9]', '', raw.lower())
+        for gw in ('studio', 'designs', 'design', 'architects', 'architecture', 'interiors', 'interior', 'group', 'the', 'build'):
+            raw_clean = raw_clean.replace(gw, '')
+        if len(raw_clean) >= 2:
+            tokens.add(raw_clean)
+
     if not tokens:
         return False
-    return any(t in netloc_clean for t in tokens)
+    return any(t in domain_main or domain_main in t for t in tokens if len(t) >= 3 or t == domain_main)
 
 import json
 import re
@@ -128,7 +157,19 @@ class SourceExtractionAgent:
         # Deterministic extraction
         # ---------------------------------------------------------
 
+        from urllib.parse import urlparse
+        media_email_domains = {
+            "surfaces.in", "surfacesreporter.com", "condenast.com", "dezeen.com",
+            "architecturaldigest.in", "architecturaldigest.com", "vogue.in", "elledecor.in",
+            "archdaily.com", "houzz.com", "houzz.in", "buildofy.com", "re-thinkingthefuture.com",
+            "indiatoday.com", "forbes.com", "goodhomes.co.in", "goodhomes.in"
+        }
+
         for email in source.get("emails", []):
+            email_clean = email.strip().lower()
+            em_domain = email_clean.split("@")[-1] if "@" in email_clean else ""
+            if any(em_domain == md or em_domain.endswith("." + md) for md in media_email_domains):
+                continue
             fields.append(
                 ExtractedField(
                     field="email",
@@ -141,6 +182,10 @@ class SourceExtractionAgent:
             )
 
         for phone in source.get("phones", []):
+            if source_url:
+                src_netloc = urlparse(source_url).netloc.lower()
+                if any(md in src_netloc for md in media_email_domains):
+                    continue
             fields.append(
                 ExtractedField(
                     field="contact",
@@ -151,8 +196,6 @@ class SourceExtractionAgent:
                     confidence=1.0,
                 )
             )
-
-        from urllib.parse import urlparse
         social_and_portal_domains = {
             "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
             "threads.com", "threads.net", "twitter.com", "x.com", "linktr.ee",

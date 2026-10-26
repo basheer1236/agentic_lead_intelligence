@@ -23,26 +23,53 @@ from app.models.source_extraction import ExtractedField
 def _is_official_studio_domain(netloc: str, designer_name: str | None = None, studio_name: str | None = None) -> bool:
     if not netloc:
         return False
-    netloc_clean = re.sub(r'^(www\.)', '', netloc.lower())
+    netloc_clean = re.sub(r'^(www\.)', '', netloc.lower().split(':')[0])
     non_studio = {
         "linkedin.com", "instagram.com", "facebook.com", "youtube.com",
         "architecturaldigest.in", "architecturaldigest.com", "wikipedia.org",
         "pinterest.com", "twitter.com", "x.com", "threads.com", "threads.net",
         "linktr.ee", "linktree.com", "medium.com", "tumblr.com",
         "indiadesignid.com", "homegrown.co.in", "outlookindia.com",
-        "vogue.in", "elledecor.in", "f6s.com", "rocketreach.co"
+        "vogue.in", "elledecor.in", "f6s.com", "rocketreach.co",
+        "surfacesreporter.com", "surfaces.in", "buildofy.com", "archdaily.com",
+        "re-thinkingthefuture.com", "findglocal.com", "houzz.in", "houzz.com",
+        "justdial.com", "indiamart.com", "tradeindia.com", "yellowpages.in",
+        "sulekha.com", "housing.com", "magicbricks.com", "nobroker.in", "99acres.com",
+        "theroots.in", "dezeen.com", "goodhomes.co.in", "goodhomes.in"
     }
-    if any(ns in netloc_clean for ns in non_studio):
+    if any(netloc_clean == ns or netloc_clean.endswith('.' + ns) for ns in non_studio):
         return False
+    domain_main = netloc_clean.split('.')[0]
+
     tokens = set()
-    for name in (studio_name, designer_name):
-        if name:
-            for t in re.split(r'[^a-zA-Z0-9]', name.lower()):
-                if len(t) >= 3 and t not in ("studio", "design", "designs", "architects", "architecture", "interior", "interiors", "group", "the", "and", "for"):
-                    tokens.add(t)
+    for raw in (studio_name, designer_name):
+        if not raw:
+            continue
+        # 1. Clean words (length >= 3, non-generic)
+        for t in re.split(r'[^a-zA-Z0-9]', raw.lower()):
+            if len(t) >= 3 and t not in ('studio', 'design', 'designs', 'architects', 'architecture', 'interior', 'interiors', 'group', 'the', 'and', 'for', 'plus', 'build'):
+                tokens.add(t)
+
+        # 2. Handle symbol expansions ('+' -> 'plus', '&' -> 'and')
+        expanded = raw.replace('+', 'plus').replace('&', 'and')
+        clean_exp = re.sub(r'[^a-zA-Z0-9]', '', expanded.lower())
+        for gw in ('studio', 'designs', 'design', 'architects', 'architecture', 'interiors', 'interior', 'group', 'the', 'build'):
+            clean_exp = clean_exp.replace(gw, '')
+        if len(clean_exp) >= 2:
+            tokens.add(clean_exp)
+            if clean_exp.endswith('plus'):
+                tokens.add(clean_exp + 's')  # e.g. 'fplus' -> 'fpluss'
+
+        # 3. Concatenated alnum without generic words
+        raw_clean = re.sub(r'[^a-zA-Z0-9]', '', raw.lower())
+        for gw in ('studio', 'designs', 'design', 'architects', 'architecture', 'interiors', 'interior', 'group', 'the', 'build'):
+            raw_clean = raw_clean.replace(gw, '')
+        if len(raw_clean) >= 2:
+            tokens.add(raw_clean)
+
     if not tokens:
         return False
-    return any(t in netloc_clean for t in tokens)
+    return any(t in domain_main or domain_main in t for t in tokens if len(t) >= 3 or t == domain_main)
 
 
 from app.storage.database import SessionLocal
@@ -429,12 +456,15 @@ def designer_enrichment_node(state):
                             parsed = urlparse(src.url)
                             netloc = parsed.netloc.lower()
                             if netloc and _is_official_studio_domain(netloc, designer_name, studio_name):
-                                for page_list in (source_data.get("about_pages", [])[:2], source_data.get("contact_pages", [])[:2]):
-                                    for subpage_url in page_list:
-                                        clean_sub = subpage_url.split("#")[0].rstrip("/")
-                                        if clean_sub not in visited_urls and clean_sub not in discovered_subpages:
-                                            discovered_subpages.append(clean_sub)
-                                            visited_urls.add(clean_sub)
+                                page_candidates = list(source_data.get("about_pages", [])[:2]) + list(source_data.get("contact_pages", [])[:2])
+                                if not page_candidates:
+                                    root_u = f"{parsed.scheme or 'https'}://{parsed.netloc}".rstrip('/')
+                                    page_candidates = [f"{root_u}/contactus", f"{root_u}/contact-us", f"{root_u}/contact", f"{root_u}/aboutus", f"{root_u}/about-us", f"{root_u}/about"]
+                                for subpage_url in page_candidates:
+                                    clean_sub = subpage_url.split("#")[0].rstrip("/")
+                                    if clean_sub not in visited_urls and clean_sub not in discovered_subpages:
+                                        discovered_subpages.append(clean_sub)
+                                        visited_urls.add(clean_sub)
                         except Exception as exc:
                             print(f"[designer_enrichment_node] Web research fetch error: {exc}")
 

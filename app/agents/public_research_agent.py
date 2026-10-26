@@ -262,7 +262,10 @@ Return ONLY this JSON:
 
         print("-" * 70)
 
-        print(raw_response)
+        try:
+            print(raw_response)
+        except UnicodeEncodeError:
+            print(raw_response.encode("ascii", errors="replace").decode("ascii"))
 
         print("-" * 70)
 

@@ -132,15 +132,25 @@ def _check_identity_match(
     if common_handle_tokens:
         return True, 0.95, None
 
-    # Check 2: Substring matching against concatenated designer or studio names
+    # Check 2: Substring matching against concatenated designer or studio names (with symbol expansion)
     clean_designer = re.sub(r"[^a-zA-Z0-9]", "", (designer_name or "").lower())
-    clean_studio = re.sub(r"[^a-zA-Z0-9]", "", (studio_name or "").lower())
-
     if clean_designer and (clean_designer in handle_lower or handle_lower in clean_designer):
         return True, 0.95, None
 
-    if clean_studio and (clean_studio in handle_lower or handle_lower in clean_studio):
-        return True, 0.95, None
+    studio_variants = [studio_name or ""]
+    if studio_name and ("+" in studio_name or "&" in studio_name):
+        studio_variants.append(studio_name.replace("+", "plus").replace("&", "and"))
+        studio_variants.append(studio_name.replace("+", "pluss").replace("&", "and"))
+
+    for svar in studio_variants:
+        clean_s = re.sub(r"[^a-zA-Z0-9]", "", svar.lower())
+        if clean_s and (clean_s in handle_lower or handle_lower in clean_s):
+            return True, 0.95, None
+        clean_s_core = clean_s
+        for gw in ("designs", "design", "studio", "architects", "architecture", "interiors", "interior"):
+            clean_s_core = clean_s_core.replace(gw, "")
+        if clean_s_core and len(clean_s_core) >= 3 and (clean_s_core in handle_lower or handle_lower in clean_s_core):
+            return True, 0.95, None
 
     # Check 3: Check title / snippet evidence if provided
     context_tokens = extract_tokens(title).union(extract_tokens(snippet))
