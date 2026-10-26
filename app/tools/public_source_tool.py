@@ -26,27 +26,39 @@ def _extract_emails(text: str) -> list[str]:
 def _extract_phones(text: str) -> list[str]:
     import re
 
-    pattern = r"""
-        (?:
-            \+?\d{1,3}[\s.-]?
-        )?
-        (?:\(?\d{2,5}\)?[\s.-]?)
-        \d{3,4}[\s.-]?\d{3,4}
-    """
+    raw_regex = r"(?:(?:\+|00)\s*91[\s.-]?)?(?:0[\s.-]?)?(?:\d{2,5}(?:[\s.-]?\d{3,5}){1,2}|[6-9]\d{4}[\s.-]?\d{5}|[6-9]\d{9})\b"
+    pattern = re.compile(raw_regex)
 
-    matches = re.findall(
-        pattern,
-        text,
-        flags=re.VERBOSE,
-    )
+    matches = pattern.findall(text)
+    cleaned = []
+    dummy_prefixes = ("120304", "123456", "000000", "999999", "111111", "20304", "203040")
 
-    return sorted(
-        set(
-            match.strip()
-            for match in matches
-            if len(match.strip()) >= 7
-        )
-    )
+    for match in matches:
+        raw = match.strip()
+        digits = re.sub(r"\D", "", raw)
+        if 8 <= len(digits) <= 12:
+            if not any(digits.startswith(dp) or digits.endswith(dp) for dp in dummy_prefixes):
+                cleaned.append(raw)
+
+    def _phone_priority(p: str) -> int:
+        d = re.sub(r"\D", "", p)
+        if "+91" in p or (p.startswith("91") and len(d) == 12):
+            return 0
+        if len(d) == 10 and d[0] in "6789":
+            return 1
+        if d.startswith("0") or len(d) >= 10:
+            return 2
+        return 3
+
+    seen = set()
+    unique = []
+    for p in sorted(cleaned, key=_phone_priority):
+        norm = re.sub(r"\D", "", p)
+        if norm not in seen:
+            seen.add(norm)
+            unique.append(p)
+
+    return unique
 
 
 def _extract_social_links(
@@ -230,6 +242,12 @@ def _fetch_with_httpx(
         url,
         headers={
             "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Sec-Ch-Ua": '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Upgrade-Insecure-Requests": "1",
         },
         timeout=20,
         follow_redirects=True,
@@ -264,7 +282,7 @@ def fetch_public_source(
             url
         )
 
-        if len(result["text"]) >= 300:
+        if len(result["text"]) >= 80 or result["emails"] or result["phones"] or result["contact_pages"]:
 
             result["fetch_method"] = "httpx"
             result["fetch_status"] = "success"

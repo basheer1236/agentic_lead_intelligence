@@ -196,7 +196,16 @@ class SourceExtractionAgent:
                     studio_name=studio_name,
                     platform_target=social_type
                 )
-                if val.verification_status in ("VERIFIED", "BLOCKED_OR_UNVERIFIED", "UNVERIFIED") and val.is_profile_type:
+                # Media blacklist guard: Never attribute known media / magazine accounts to designers
+                media_bl = {"dezeen", "architecturaldigest", "vogue", "elledecor", "goodhomes", "archdaily", "forbes"}
+                clean_soc_u = social_url.lower().replace("-", "").replace("_", "").replace(".", "")
+                if any(m in clean_soc_u for m in media_bl):
+                    continue
+
+                # On non-official sites, require VERIFIED identity match
+                is_official = (source_type == "official_website")
+                status_ok = (val.verification_status == "VERIFIED") or (is_official and val.verification_status in ("BLOCKED_OR_UNVERIFIED", "UNVERIFIED"))
+                if status_ok and val.is_profile_type:
                     fields.append(
                         ExtractedField(
                             field=field_name,
@@ -340,20 +349,22 @@ Return this JSON structure:
 Do not return fields that are not supported by the source.
 """
 
-        raw_response = self.llm.generate(
-            system_prompt=SYSTEM_PROMPT,
-            user_prompt=user_prompt,
-        )
-
-        data = _extract_json(raw_response)
-
-        semantic_result = SourceExtractionResult.model_validate(data)
+        semantic_fields = []
+        try:
+            raw_response = self.llm.generate(
+                system_prompt=SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+            )
+            data = _extract_json(raw_response)
+            semantic_result = SourceExtractionResult.model_validate(data)
+            semantic_fields = semantic_result.fields
+        except Exception as exc:
+            print(f"[SourceExtractionAgent] LLM semantic extraction error (deterministic fields preserved): {exc}")
 
         # ---------------------------------------------------------
         # Merge deterministic + semantic fields
         # ---------------------------------------------------------
-
-        all_fields = fields + semantic_result.fields
+        all_fields = fields + semantic_fields
 
         return SourceExtractionResult(
             source_url=source_url,

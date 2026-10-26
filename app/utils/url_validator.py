@@ -113,6 +113,13 @@ def _check_identity_match(
     Checks whether a handle, title, or snippet reasonably matches the target designer or studio.
     """
     handle_lower = handle.lower().replace("_", "").replace("-", "").replace(".", "")
+    media_blacklist = {
+        "dezeen", "architecturaldigest", "architecturaldigestindia", "vogue", "vogueindia",
+        "elledecor", "elledecorindia", "goodhomes", "housing", "nobroker", "magicbricks",
+        "indiatoday", "ndtv", "forbes", "rethinkingthefuture", "archdaily"
+    }
+    if any(b in handle_lower for b in media_blacklist):
+        return False, 0.0, f"Handle '{handle}' belongs to known media/publication blacklist" 
     target_tokens = extract_tokens(designer_name).union(extract_tokens(studio_name))
 
     if not target_tokens:

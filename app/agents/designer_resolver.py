@@ -467,18 +467,23 @@ class DesignerResolver:
     # TOKEN MATCH
     # =============================================================
 
-    @staticmethod
+    GENERIC_STUDIO_WORDS = {
+        "studio", "studios", "design", "designs", "architect", "architects",
+        "architecture", "architectural", "interior", "interiors", "the", "and",
+        "group", "atelier", "associates", "firm", "collective", "lab", "works",
+        "plus", "build"
+    }
+
+    @classmethod
     def _tokens_match(
+        cls,
         value1: str,
         value2: str,
     ) -> bool:
         """
         Determine whether two normalized names have essentially
-        the same meaningful tokens.
-
-        This is stricter than simple fuzzy similarity.
+        the same meaningful tokens. Distinctive tokens must match.
         """
-
         if not value1 or not value2:
             return False
 
@@ -488,31 +493,21 @@ class DesignerResolver:
         if not tokens1 or not tokens2:
             return False
 
-        # Exact token equality.
         if tokens1 == tokens2:
             return True
 
-        # One set must contain the other, but only when the shared
-        # identity is substantial.
-        smaller = min(
-            tokens1,
-            tokens2,
-            key=len,
-        )
+        meaningful1 = tokens1 - cls.GENERIC_STUDIO_WORDS
+        meaningful2 = tokens2 - cls.GENERIC_STUDIO_WORDS
 
-        larger = max(
-            tokens1,
-            tokens2,
-            key=len,
-        )
+        if not meaningful1 or not meaningful2:
+            return False
 
-        if smaller.issubset(larger):
+        if meaningful1 == meaningful2:
+            return True
 
-            # Avoid matching generic one-word names such as:
-            # "Design" -> "Design Studio"
-            #
-            # Require at least 2 meaningful tokens.
-            if len(smaller) >= 2:
+        if meaningful1.issubset(meaningful2) or meaningful2.issubset(meaningful1):
+            shared = meaningful1.intersection(meaningful2)
+            if any(len(tok) >= 3 for tok in shared):
                 return True
 
         return False
